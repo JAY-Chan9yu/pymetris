@@ -1,0 +1,161 @@
+# 1 - Import library
+import pygame
+from pygame.locals import *
+import math
+import random
+
+# 2 - Initialize the game
+pygame.init()
+width, height = 640, 480
+screen=pygame.display.set_mode((width, height))
+keys = [False, False, False, False]
+playerpos = [100, 100]
+acc=[0,0]
+arrows=[]
+badtimer = 100
+badtimer1 = 0
+badguys = [[640, 100]]
+healthvalue = 194
+
+# 3 - Load images
+player = pygame.image.load("resources/images/dude.png")
+grass = pygame.image.load("resources/images/grass.png")
+castle = pygame.image.load("resources/images/castle.png")
+arrow = pygame.image.load("resources/images/bullet.png")
+badguyimg1 = pygame.image.load("resources/images/badguy.png")
+badguyimg=badguyimg1
+healthbar = pygame.image.load("resources/images/healthbar.png")
+health = pygame.image.load("resources/images/health.png")
+
+# 4 - keep looping through
+while 1:
+    badtimer -= 1
+    # 5 - clear the screen before drawing it agains
+    screen.fill(0)
+    # 6 - draw the screen elements
+    for x in range(int(width/grass.get_width() + 1)) :
+        for y in range(int(height/grass.get_height() + 1)) :
+            screen.blit(grass, (x * 100, y * 100))
+
+    screen.blit(castle,(0,30))
+    screen.blit(castle,(0,135))
+    screen.blit(castle,(0,240))
+    screen.blit(castle,(0,345))
+
+    position = pygame.mouse.get_pos()
+    # angle 값은 라디안값임, 1radian = 57.29도
+    angle = math.atan2(position[1] - (playerpos[1] + 32), position[0] - (playerpos[0] + 26))
+    playerrot = pygame.transform.rotate(player, 360 - angle * 57.29)
+    playerpos1 = (playerpos[0] - playerrot.get_rect().width / 2, playerpos[1] - playerrot.get_rect().height / 2) # /2 해주는건 이미지가 회전할때 중심점을 기준으로 회전하기 위해서
+    screen.blit(playerrot, playerpos1)
+
+    # 6.2 - Draw arrows
+    for bullet in arrows:
+        index=0
+        velx = math.cos(bullet[0]) * 10 # 반지름이 1인 단위원이라 했을 경우 cos = x
+        vely = math.sin(bullet[0]) * 10 # 반지름이 1인 단위원이라 했을 경우 sin = y
+        bullet[1] += velx
+        bullet[2] += vely
+        if bullet[1] < -64 or bullet[1] > 640 or bullet[2] < -64 or bullet[2] > 480 : # 화면 밖에서 나가면 사라짐
+            arrows.pop(index)
+        index += 1
+        for projectile in arrows:
+            arrow1 = pygame.transform.rotate(arrow, 360 - projectile[0] * 57.29)
+            screen.blit(arrow1, (projectile[1], projectile[2]))
+
+    # 6.3
+    if badtimer == 0 :
+        badguys.append([640, random.randint(50, 430)])
+        badtimer = 100 - (badtimer1 * 2)
+        if badtimer1 >= 35 :
+            badtimer1 = 35
+        else :
+            badtimer1 += 5
+    index = 0 # <-- 이거 enumerate 로 대체해서 써보자!!
+    for badguy in badguys :
+        if badguy[0] < -64 :
+            badguys.pop(index)
+        badguy[0] -= 7
+        #6.3.1
+        badrect = pygame.Rect(badguyimg.get_rect())
+        badrect.top = badguy[1]
+        badrect.left = badguy[0]
+        if badrect.left < 64 :
+            healthvalue -= random.randint(5, 20)
+            badguys.pop(index)
+        index += 1
+
+        #6.3.2
+        index1 = 0
+        for bullet in arrows :
+            bullrect = pygame.Rect(arrow.get_rect())
+            bullrect.left = bullet[1]
+            bullrect.top = bullet[2]
+            if badrect.colliderect(bullrect) : # 두 사각형이 오버랩되는지 비교하는 함수
+                acc[0] += 1
+                badguys.pop(index)
+                arrows.pop(index1)
+            index1 += 1
+
+    for badguy in badguys :
+        screen.blit(badguyimg, badguy)
+        
+    #6.4
+    font = pygame.font.Font(None, 24)
+    survivedtext = font.render(str(int(90000 - pygame.time.get_ticks())) + ":" + str(int((90000-pygame.time.get_ticks()) / 1000 % 60)).zfill(2), True, (0,0,0))
+    textRect = survivedtext.get_rect()
+    textRect.topright = [635, 5]
+    screen.blit(survivedtext, textRect)
+    #6.5
+    screen.blit(healthbar, (5,5))
+    for health1 in range(healthvalue):
+        screen.blit(health, (health1+8,8))
+
+    # 7 - update the screen
+    pygame.display.flip()
+    # 8 - loop through the events
+    for event in pygame.event.get():
+        # check if the event is the X button
+        if event.type==pygame.KEYDOWN: # key가 눌렸을때
+            if event.key==K_w:
+                keys[0]=True
+            elif event.key==K_a:
+                keys[1]=True
+            elif event.key==K_s:
+                keys[2]=True
+            elif event.key==K_d:
+                keys[3]=True
+
+        if event.type==pygame.KEYUP: # key가 떨어졌을때
+            if event.key==pygame.K_w:
+                keys[0]=False
+            elif event.key==pygame.K_a:
+                keys[1]=False
+            elif event.key==pygame.K_s:
+                keys[2]=False
+            elif event.key==pygame.K_d:
+                keys[3]=False
+
+        if event.type==pygame.QUIT:
+            # if it is quit the game
+            pygame.quit()
+            exit(0)
+
+        if event.type==pygame.MOUSEBUTTONDOWN :
+            print(angle)
+            position = pygame.mouse.get_pos()
+            acc[1] += 1
+            # 각도, x, y 좌표 추가
+            arrows.append([math.atan2(position[1] - (playerpos1[1] + 32), position[0] - (playerpos1[0] + 26)),
+                           playerpos1[0] + 32, playerpos1[1] + 32])
+
+
+   # 9 - Move player
+    if keys[0] and playerpos[1] > 0 :
+        playerpos[1]-=5
+    elif keys[2] and playerpos[1] < 432 :
+        playerpos[1]+=5
+    if keys[1] and playerpos[0] > 5 :
+        playerpos[0]-=5
+    elif keys[3] and playerpos[0] < 576 :
+        playerpos[0]+=5
