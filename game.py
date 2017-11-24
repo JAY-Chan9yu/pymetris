@@ -71,6 +71,7 @@ while 1:
             badtimer1 = 35
         else :
             badtimer1 += 5
+
     index = 0 # <-- 이거 enumerate 로 대체해서 써보자!!
     for badguy in badguys :
         if badguy[0] < -64 :
@@ -83,8 +84,6 @@ while 1:
         if badrect.left < 64 :
             healthvalue -= random.randint(5, 20)
             badguys.pop(index)
-        index += 1
-
         #6.3.2
         index1 = 0
         for bullet in arrows :
@@ -96,10 +95,11 @@ while 1:
                 badguys.pop(index)
                 arrows.pop(index1)
             index1 += 1
+        index += 1
 
     for badguy in badguys :
         screen.blit(badguyimg, badguy)
-        
+
     #6.4
     font = pygame.font.Font(None, 24)
     survivedtext = font.render(str(int(90000 - pygame.time.get_ticks())) + ":" + str(int((90000-pygame.time.get_ticks()) / 1000 % 60)).zfill(2), True, (0,0,0))
@@ -113,6 +113,7 @@ while 1:
 
     # 7 - update the screen
     pygame.display.flip()
+
     # 8 - loop through the events
     for event in pygame.event.get():
         # check if the event is the X button
@@ -142,13 +143,12 @@ while 1:
             exit(0)
 
         if event.type==pygame.MOUSEBUTTONDOWN :
-            print(angle)
+            print(str(angle) + "index : " + str(index))# + " index1 : " + index1)
             position = pygame.mouse.get_pos()
             acc[1] += 1
             # 각도, x, y 좌표 추가
             arrows.append([math.atan2(position[1] - (playerpos1[1] + 32), position[0] - (playerpos1[0] + 26)),
                            playerpos1[0] + 32, playerpos1[1] + 32])
-
 
    # 9 - Move player
     if keys[0] and playerpos[1] > 0 :
