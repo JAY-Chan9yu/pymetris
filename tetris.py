@@ -44,9 +44,15 @@ blockColor = ORANGE # 블럭 색상
 nextColor = BLUE # 다음 블럭 색상
 checkMoveR = 0
 checkMoveL = 0
-blockX = 300 # 현재 나오는 블럭의 x,y 좌표
+blockX = 600 # 현재 나오는 블럭의 x,y 좌표
 blockY = 0
+missionColor = 3 # 미션 컬러
+minPath = 999 # 최단경로
 
+startPathX = 0
+startPathY = 29
+endPathX = 10
+endPathY = 40
 # load images
 block = pygame.image.load("tetrisResource/image/block.jpg")
 
@@ -85,15 +91,49 @@ def copyBlocToMap(block, X, Y) :
     nextColor = colors[random.randint(1, 6)]
 
 def missionClearEvent() :
+    dfsSerch(0, 30, 1)
+    print("short path cnt : " + str(minPath))
 
+# 최단거리 탐색
+def dfsSerch(x, y, cnt) :
+    global map
+    global endPathX
+    global endPathY
+    global mapRangeX
+    global mapRangeY
+    global missionColor
+    global minPath
+
+    if x == (endPathX - 1) and y == (endPathY - 1) :
+        if cnt < minPath :
+            minPath = cnt
+        return
+
+    map[y][x] = 0
+
+    print("x : " + str(x) + " y : " + str(y))
+    if x > 0 and map[y][x - 1] == missionColor : # Left
+        dfsSerch(x - 1, y, cnt + 1)
+    if x < mapRangeX - 3 and map[y][x+1] == missionColor :
+        dfsSerch(x + 1, y, cnt + 1)
+    if y > 0 and map[y - 1][x] == missionColor :
+        dfsSerch(x, y - 1, cnt + 1)
+    if y < mapRangeY - 1 and map[y + 1][x] == missionColor : # Down
+        dfsSerch(x, y + 1, cnt + 1)
+
+    # 원상 복귀
+    map[y][x] = missionColor
 
 if __name__ == "__main__":
     nextBlockShape = blocklib.randBlock(random.randint(0, 3))
     # 오른쪽 벽 채우기(오른쪽으로 더이상 이동 못하게)
     for i in range(0, mapRangeY) :
         map[i][30] = 88
-    for i in range(1, 31) :
-        map[39][i] = 1
+    for i in range(30, 40) :
+        map[i][9] = 3
+    for i in range(1, 9) :
+        map[30][i] = 3
+        #map[39][i] = 1
 
     while 1:
         blockTimer -= 1
@@ -197,6 +237,9 @@ if __name__ == "__main__":
             for i in range(0, mapRangeX - 2) :
                 screen.blit(block, (tempN, (mapRangeY - 1) * 20))
                 tempN += 20
+            pygame.draw.rect(screen, ORANGE, pygame.Rect((startPathX * 20) + 280, (startPathY * 20), 20, 20))
+            pygame.draw.rect(screen, ORANGE, pygame.Rect((endPathX * 20) + 280, (endPathY * 20), 20, 20))
+
 
             # update screen
             pygame.display.flip()
@@ -253,4 +296,5 @@ if __name__ == "__main__":
             keys[1] = 0
         elif keys[4] == 2 :
             missionClearEventFlag = 1
+            missionClearEvent()
             keys[4] = 0
