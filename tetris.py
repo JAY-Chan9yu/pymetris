@@ -8,8 +8,9 @@ import blocklib
 class tetris :
     # load images
     block = pygame.image.load("tetrisResource/image/block.jpg")
-    width, height = 1200, 1000
+    width, height = 1200, 820
     screen=pygame.display.set_mode((width, height))
+
     mapRangeX, mapRangeY = 33, 41
 
     keys = [0, 0, 0, 0, 0]              # key 값 판단하는 리스트
@@ -51,13 +52,15 @@ class tetris :
     startPathY = 29
     endPathX = 10
     endPathY = 40
+    Map = [[0] * 33 for row in range(41)]  # 20 x 20  30 * 20 = 600 픽셀
 
     # 생성자
     def __init__(self) :
-        self.map = [[0] * tetris.mapRangeX for row in range(tetris.mapRangeY)] # 20 x 20  30 * 20 = 600 픽셀
+        pass
+        #self.map = [[0] * tetris.mapRangeX for row in range(tetris.mapRangeY)]
 
     # 블럭이 바닥에 닿거나 다른 블럭에 닿았을 경우 map에 copy하는 함수
-    def copyBlockToMap(self) :
+    def copyBlockToMap() :
         for i in range(0, 4) :
             for j in range(0, 4) :
                 # 지하철 노선에 따른 색깔
@@ -75,40 +78,40 @@ class tetris :
                 elif tetris.blockColor == tetris.BROWN :
                     tempColor = 6
 
-                    if nowBlockShape[(tetris.changeBlockShape * 4) + i][j] >= 1 :
-                        tetris.map[int((Y / 20) + i)][int(((X - 300) / 20) + j)] = tempColor
+                if tetris.nowBlockShape[(tetris.changeBlockShape * 4) + i][j] >= 1 :
+                    tetris.Map[int((tetris.blockY / 20) + i)][int(((tetris.blockX - 300) / 20) + j)] = tempColor
 
         tetris.blockTimer1 = 5000
         tetris.blockColor = tetris.nextColor
-        tetris.nowBlockShape = nextBlockShape
+        tetris.nowBlockShape = tetris.nextBlockShape
         tetris.nextBlockShape = blocklib.randBlock(random.randint(0, 3))
         tetris.nextColor = tetris.colors[random.randint(1, 6)]
 
     # 지하철 노선 연결하는 미션 체크하는 함수
-    def missionClearEvent(self) :
-        dfsSerch(0, 30, 1)
+    def missionClearEvent() :
+        tetris.dfsSerch(0, 30, 1)
         print("short path cnt : " + str(tetris.minPath))
 
     # 최단거리 탐색
-    def dfsSerch(self, x, y, cnt) :
+    def dfsSerch(x, y, cnt) :
         if x == (tetris.endPathX - 1) and y == (tetris.endPathY - 1) :
             if cnt < tetris.minPath :
                 tetris.minPath = cnt
             return
 
-        tetris.map[y][x] = 0
+        tetris.Map[y][x] = 0
 
         print("x : " + str(x) + " y : " + str(y))
-        if x > 0 and tetris.map[y][x - 1] == tetris.missionColor : # Left
+        if x > 0 and tetris.Map[y][x - 1] == tetris.missionColor : # Left
             tetris.dfsSerch(x - 1, y, cnt + 1)
-        if x < tetris.mapRangeX - 3 and tetris.map[y][x+1] == tetris.missionColor :
+        if x < tetris.mapRangeX - 3 and tetris.Map[y][x+1] == tetris.missionColor :
             tetris.dfsSerch(x + 1, y, cnt + 1)
-        if y > 0 and tetris.map[y - 1][x] == tetris.missionColor :
+        if y > 0 and tetris.Map[y - 1][x] == tetris.missionColor :
             tetris.dfsSerch(x, y - 1, cnt + 1)
-        if y < tetris.mapRangeY - 1 and tetris.map[y + 1][x] == tetris.missionColor : # Down
+        if y < tetris.mapRangeY - 1 and tetris.Map[y + 1][x] == tetris.missionColor : # Down
             tetris.dfsSerch(x, y + 1, cnt + 1)
         # 원상 복귀
-        tetris.map[y][x] = tetris.missionColor
+        tetris.Map[y][x] = tetris.missionColor
 
     # key값 에 따른 움직임 함수
     def movePlay() :
@@ -132,7 +135,7 @@ class tetris :
             tetris.keys[4] = 0
 
     # block 모양을 그리는 함수
-    def drawBlock(self, shape, color, x, y) :
+    def drawBlock(shape, color, x, y) :
         for i in range(0, 4) :
             tBlock = shape
             yBlock = tBlock[(tetris.changeBlockShape * 4) + i]
@@ -146,7 +149,7 @@ class tetris :
     # map을 화면에서 볼수 있도록 그려주는 함수
     def drawMap() :
         # draw map.
-        for i, yMap in enumerate(tetris.map) :
+        for i, yMap in enumerate(tetris.Map) :
             tempX = 300
             tempY = 20 * i
             for j, xMap  in enumerate(yMap) :
@@ -183,10 +186,10 @@ class tetris :
                 tempN += 20
         tempN = 280
         for i in range(0, tetris.mapRangeX - 2) :
-            screen.blit(tetris.block, (tempN, (mapRangeY - 1) * 20))
+            tetris.screen.blit(tetris.block, (tempN, (tetris.mapRangeY - 1) * 20))
             tempN += 20
         pygame.draw.rect(tetris.screen, tetris.ORANGE, pygame.Rect((tetris.startPathX * 20) + 280, (tetris.startPathY * 20), 20, 20))
-        pygame.draw.rect(screen, tetris.ORANGE, pygame.Rect((tetris.endPathX * 20) + 280, (tetris.endPathY * 20), 20, 20))
+        pygame.draw.rect(tetris.screen, tetris.ORANGE, pygame.Rect((tetris.endPathX * 20) + 280, (tetris.endPathY * 20), 20, 20))
 
     # key 입력 이벤트 처리 함수
     def keyeEventProcess() :
@@ -230,21 +233,21 @@ class tetris :
             yBlock = tetris.nowBlockShape[(tetris.changeBlockShape * 4) + i]
             # map에 블럭이 내려올때 바로 아래단에 블럭이 차있는지 확인 or 바닥에 닿았을 경우
             for j, tBlock in enumerate(yBlock) :
-                if ((tBlock == 1 and tetris.map[int(tetris.blockY / 20) + i + 1][int((tetris.blockX - 300) / 20) + j] >= 1)
+                if ((tBlock == 1 and tetris.Map[int(tetris.blockY / 20) + i + 1][int((tetris.blockX - 300) / 20) + j] >= 1)
                         or (tetris.blockY + 60 == ((tetris.mapRangeY - 1) * 20) - 20)) :
                     tetris.copyBlockToMap()
                     tetris.blockX = 500
                     tetris.blockY = 0
                 # 블럭이 좌, 우로 이동 가능한지 체크
-                if (tBlock == 1 and tetris.map[int(tetris.blockY / 20) + i][int((tetris.blockX - 300) / 20) + j - 1] >= 1) :
+                if (tBlock == 1 and tetris.Map[int(tetris.blockY / 20) + i][int((tetris.blockX - 300) / 20) + j - 1] >= 1) :
                     tetris.checkMoveL = 0
-                if (tBlock == 1 and tetris.map[int(tetris.blockY / 20) + i][int((tetris.blockX - 300) / 20) + j + 1] >= 1) :
+                if (tBlock == 1 and tetris.Map[int(tetris.blockY / 20) + i][int((tetris.blockX - 300) / 20) + j + 1] >= 1) :
                     tetris.checkMoveR = 0
 
     # 한 라인이 꽊찼는지 확인하는 함수
     def checkFillBlock() :
         for i in range(tetris.mapRangeY - 2, 0, -1) :
-            yMap = tetris.map[i]
+            yMap = tetris.Map[i]
             checkLine = 0
             for xMap in yMap : # 라인 체크
                 if xMap >= 1 :
@@ -252,53 +255,7 @@ class tetris :
             if checkLine >= 31 : # 라인이 한줄 꽉찰경우
                 for t in range(tetris.mapRangeY - 2, 1, -1) :
                     for k in range(0, 31) :
-                        tetris.map[t][k] = tetris.map[t - 1][k]
+                        tetris.Map[t][k] = tetris.Map[t - 1][k]
                     for k in range(0, 31) :
-                        tetris.map[0][k] = 0
+                        tetris.Map[0][k] = 0
                 checkLine = 0
-
-if __name__ == "__main__":
-    pygame.init()
-    print("TEST")
-    '''nextBlockShape = blocklib.randBlock(random.randint(0, 3))
-    # 오른쪽 벽 채우기(오른쪽으로 더이상 이동 못하게)
-    for i in range(0, mapRangeY) :
-        map[i][30] = 88
-    for i in range(30, 40) :
-        map[i][9] = 3
-    for i in range(1, 9) :
-        map[30][i] = 3
-        #map[39][i] = 1
-    for i in range(1, 30) :
-        map[38][i] = 2
-    for i in range(1, 30) :
-        map[39][i] = 2
-
-    while 1:
-        blockTimer -= 1
-        if blockTimer == 0 :
-            blockTimer = blockTimer1
-            screen.fill(0)
-
-            updateMap()
-            checkFillBlock()
-
-            # draw map
-            drawMap()
-            # draw now block
-            drawBlock(nowBlockShape, blockColor, blockX, blockY)
-            # draw next block
-            drawBlock(nextBlockShape, nextColor, 940, 0)
-            # draw background
-            drawBackbround()
-
-            # update screen
-            pygame.display.flip()
-
-            # 블럭 아래로 한칸씩 내리기
-            if blockY < ((mapRangeY - 1) * 20) - 80 :
-                blockY += 1
-
-        # key event
-        keyeEventProcess()
-'''
