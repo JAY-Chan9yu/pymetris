@@ -7,30 +7,18 @@ import tetris
 
 if __name__ == "__main__":
     pygame.init()
-    game = tetris.tetris
+    game = tetris.tetris()
 
     game.nextBlockShape = blocklib.randBlock(random.randint(0, 3))
 
     # 오른쪽 벽 채우기(오른쪽으로 더이상 이동 못하게)
     for i in range(0, game.mapRangeY) :
         game.Map[i][30] = 88
-    for i in range(30, 40) :
-        game.Map[i][9] = 3
-    for i in range(1, 9) :
-        game.Map[30][i] = 3
-        #map[39][i] = 1
-    for i in range(1, 30) :
-        game.Map[38][i] = 2
-    for i in range(1, 30) :
-        game.Map[39][i] = 2
-    for i in range(2, 30) :
-        game.Map[37][i] = 2
-    for i in range(1, 30) :
-        game.Map[36][i] = 2
 
     while 1 :
         game.blockTimer -= 1
-        if game.blockTimer == 0 :
+
+        if game.blockTimer <= 0 :
             game.blockTimer = game.blockTimer1
             game.screen.fill(0)
 
@@ -48,10 +36,6 @@ if __name__ == "__main__":
 
             # update screen
             pygame.display.flip()
-            
-            # 블럭 아래로 한칸씩 내리기
-            if game.blockY < ((game.mapRangeY - 1) * 20) - 80 :
-                game.blockY += 1
 
         # key event
         game.keyeEventProcess()
