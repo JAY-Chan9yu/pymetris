@@ -10,7 +10,7 @@ if __name__ == "__main__":
     game = tetris.tetris
 
     game.nextBlockShape = blocklib.randBlock(random.randint(0, 3))
-    print("TEST")
+
     # 오른쪽 벽 채우기(오른쪽으로 더이상 이동 못하게)
     for i in range(0, game.mapRangeY) :
         game.Map[i][30] = 88
@@ -23,6 +23,10 @@ if __name__ == "__main__":
         game.Map[38][i] = 2
     for i in range(1, 30) :
         game.Map[39][i] = 2
+    for i in range(2, 30) :
+        game.Map[37][i] = 2
+    for i in range(1, 30) :
+        game.Map[36][i] = 2
 
     while 1 :
         game.blockTimer -= 1
@@ -44,7 +48,7 @@ if __name__ == "__main__":
 
             # update screen
             pygame.display.flip()
-
+            
             # 블럭 아래로 한칸씩 내리기
             if game.blockY < ((game.mapRangeY - 1) * 20) - 80 :
                 game.blockY += 1

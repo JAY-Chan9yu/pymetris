@@ -5,7 +5,7 @@ import math
 import random
 import blocklib
 
-class tetris :
+class tetris(object) :
     # load images
     block = pygame.image.load("tetrisResource/image/block.jpg")
     width, height = 1200, 820
@@ -34,9 +34,10 @@ class tetris :
     # 블럭이 없으면 0, 있으면 1 <- 여기서 랜덤으로 2~5의 값을 주어 1이면 블럭의 색값을 부여한다.
     colors = [BLACK, BLUE, GREEN, ORANGE, BLUE, PURPLE, BROWN]
 
-    missionClearEventFlag = 0           # mission clear 이벤틀 플래그
+    statgeLevel = 1
     blockTimer = 5000                   # 게임 스피드
     blockTimer1 = 5000
+    changeBSflag = 0
     changeBlockShape = 0                # 블럭의 모양을 변경하는 변수
     nowBlockShape = blocklib.block1     # 현재 나오는 블럭의 모양
     nextBlockShape = blocklib.block1    # 다음 블럭
@@ -46,10 +47,12 @@ class tetris :
     checkMoveL = 0
     blockX = 500                        # 현재 나오는 블럭의 x,y 좌표
     blockY = 0
+    missionClearEventFlag = 0           # mission clear 이벤틀 플래그
     missionColor = 3                    # 미션 컬러
     minPath = 999                       # 최단경로
     startPathX = 0                      # 미션 경로(시작과 끝)
     startPathY = 29
+
     endPathX = 10
     endPathY = 40
     Map = [[0] * 33 for row in range(41)]  # 20 x 20  30 * 20 = 600 픽셀
@@ -58,6 +61,14 @@ class tetris :
     def __init__(self) :
         pass
         #self.map = [[0] * tetris.mapRangeX for row in range(tetris.mapRangeY)]
+
+    # map 초기화
+    def mapInit() :
+        tetris.blockTimer1 = 5000
+        tetris.blockColor = tetris.nextColor
+        tetris.nowBlockShape = tetris.nextBlockShape
+        tetris.nextBlockShape = blocklib.randBlock(random.randint(0, 3))
+        tetris.nextColor = tetris.colors[random.randint(1, 6)]
 
     # 블럭이 바닥에 닿거나 다른 블럭에 닿았을 경우 map에 copy하는 함수
     def copyBlockToMap() :
@@ -81,16 +92,16 @@ class tetris :
                 if tetris.nowBlockShape[(tetris.changeBlockShape * 4) + i][j] >= 1 :
                     tetris.Map[int((tetris.blockY / 20) + i)][int(((tetris.blockX - 300) / 20) + j)] = tempColor
 
-        tetris.blockTimer1 = 5000
-        tetris.blockColor = tetris.nextColor
-        tetris.nowBlockShape = tetris.nextBlockShape
-        tetris.nextBlockShape = blocklib.randBlock(random.randint(0, 3))
-        tetris.nextColor = tetris.colors[random.randint(1, 6)]
+        tetris.mapInit()
 
     # 지하철 노선 연결하는 미션 체크하는 함수
     def missionClearEvent() :
         tetris.dfsSerch(0, 30, 1)
         print("short path cnt : " + str(tetris.minPath))
+        # 최단경로 나왔을경우
+        if tetris.minPath < 999 :
+            tetris.missionClearEventFlag = 1
+            tetris.statgeLevel += 1
 
     # 최단거리 탐색
     def dfsSerch(x, y, cnt) :
@@ -130,7 +141,6 @@ class tetris :
             tetris.blockTimer1 = 5
             tetris.keys[1] = 0
         elif tetris.keys[4] == 2 :
-            tetris.missionClearEventFlag = 1
             tetris.missionClearEvent()
             tetris.keys[4] = 0
 
@@ -196,8 +206,8 @@ class tetris :
         # loop through the events
         for event in pygame.event.get():
             # check if the event is the X button
-            if event.type==pygame.KEYDOWN: # key가 눌렸을때
-                if event.key == K_UP:
+            if event.type == pygame.KEYDOWN: # key가 눌렸을때
+                if event.key == K_UP and tetris.blockX < 860:
                     tetris.keys[0] = 1
                 elif event.key == K_DOWN:
                     tetris.keys[1] = 1
@@ -208,8 +218,9 @@ class tetris :
                 elif event.key == K_SPACE :
                     tetris.keys[4] = 1
 
-            if event.type==pygame.KEYUP: # key가 떨어졌을때
+            if event.type == pygame.KEYUP: # key가 떨어졌을때
                 if tetris.keys[0] == 1 and event.key == K_UP:
+                    tetris.changeBSflag = 1
                     tetris.keys[0] = 2
                 elif tetris.keys[1] == 1 and event.key == K_DOWN:
                     tetris.keys[1] = 2
@@ -220,7 +231,7 @@ class tetris :
                 elif tetris.keys[4] == 1 and event.key == K_SPACE :
                     tetris.keys[4] = 2
 
-            if event.type==pygame.QUIT:
+            if event.type == pygame.QUIT:
                 # if it is quit the game
                 pygame.quit()
                 exit(0)
@@ -253,9 +264,9 @@ class tetris :
                 if xMap >= 1 :
                     checkLine += 1
             if checkLine >= 31 : # 라인이 한줄 꽉찰경우
-                for t in range(tetris.mapRangeY - 2, 1, -1) :
+                for t in range(i, 1, -1) :
                     for k in range(0, 31) :
                         tetris.Map[t][k] = tetris.Map[t - 1][k]
                     for k in range(0, 31) :
                         tetris.Map[0][k] = 0
-                checkLine = 0
+            checkLine = 0
