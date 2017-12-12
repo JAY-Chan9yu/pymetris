@@ -15,24 +15,41 @@ if __name__ == "__main__":
     for i in range(0, game.mapRangeY) :
         game.Map[i][30] = 88
 
+    game.screen.blit(game.background, (0, 0))
+    pygame.draw.rect(game.screen, game.BLACK, pygame.Rect(300, 0, 600, 800))
+    pygame.display.flip()
+
+    '''# text 만들기
+    fontObj = pygame.font.Font('tetrisResource/font/NanumGothicBold.ttf', 32)
+    textSurfaceObj = fontObj.render('Hello Font!', True, game.GREEN)
+    textRectObj = textSurfaceObj.get_rect()
+    textRectObj.center = (150, 150)
+    game.screen.blit(textSurfaceObj, textRectObj)'''
+
     while 1 :
         game.blockTimer -= 1
-
         if game.blockTimer <= 0 :
             game.blockTimer = game.blockTimer1
-            game.screen.fill(0)
 
             game.updateMap()
             game.checkFillBlock()
 
-            # draw map
-            game.drawMap()
-            # draw now block
-            game.drawBlock(game.nowBlockShape, game.blockColor, game.blockX, game.blockY)
-            # draw next block
-            game.drawBlock(game.nextBlockShape, game.nextColor, 940, 0)
-            # draw background
-            game.drawBackbround()
+            if game.missionClearEventFlag == 0 :
+                # clean map
+                pygame.draw.rect(game.screen, game.BLACK, pygame.Rect(300, 0, 600, 800))
+
+                # draw background
+                game.drawBackbround()
+                # draw map
+                game.drawMap()
+                # draw now block
+                game.drawBlock(0, game.nowBlockShape, game.blockColor, game.blockX, game.blockY)
+                # draw next block
+                game.drawBlock(0, game.nextBlockShape, game.nextColor, 940, 0)
+
+                game.drawPreviewBlock()
+            else :
+                pass
 
             # update screen
             pygame.display.flip()
