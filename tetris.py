@@ -112,10 +112,14 @@ class tetris(object) :
 
     # 지하철 노선 연결하는 미션 체크하는 함수
     def missionClearEvent() :
-        tetris.dfsSerch(tetris.startPathX, tetris.startPathY, 1)
+        tetris.dfsSerch(tetris.startPathX - 1, tetris.startPathY, 1)
         print("short path cnt : " + str(tetris.minPath))
-        # 최단경로 나왔을경우
+        # 최단경로 나왔을경우  변수 및 화면 초기화
         if tetris.minPath < 999 :
+            # 최단경로 표시
+            for i in tetris.minPathLocation :
+                tetris.screen.blit(tetris.previewBlockImg, ((i[1] * 20) + 300, (i[0] * 20)))
+                print(str(i[0]) + " " + str(i[1]))
             tetris.minPath = 0
             tetris.statgeLevel += 1
             # game clear 했을 경우
@@ -130,17 +134,28 @@ class tetris(object) :
             tetris.missionStartImg = pygame.image.load("tetrisResource/image/" + tetris.metroImgs[tetris.missionColor - 1] + ".png")
             tetris.missionEndImg = pygame.image.load("tetrisResource/image/" + tetris.metroImgs[(tetris.missionColor - 1) + 6] +".png")
             tetris.missionClearEventFlag = 1
+            tetris.Map.clear()
+            tetris.Map = [[0] * tetris.mapRangeX for row in range(tetris.mapRangeY)]
+            tetris.screen.blit(tetris.background, (0, 0))
+
             #pygame.draw.rect(game.screen, game.BLACK, pygame.Rect(300, 0, 600, 800))
             #pygame.display.flip()
 
+    tempFlag = 0
     # 최단거리 탐색(DFS)
     def dfsSerch(x, y, cnt) :
         if x == tetris.endPathX - 1 and y == tetris.endPathY - 1 :
             if cnt < tetris.minPath :
                 tetris.minPath = cnt
+                tetris.minPathLocation.clear()
+                tetris.tempFlag = 1
             return
+        elif x == tetris.endPathX and y == tetris.endPathY - 1 :
+            tetris.tempFlag = 0
+
+
+        tempMap = tetris.Map[y][x]
         tetris.Map[y][x] = 0
-        #tetris.minPathLocation.append()
         #print("x : " + str(x) + " y : " + str(y))
         if x > 0 and tetris.Map[y][x - 1] == tetris.missionColor : # Left
             tetris.dfsSerch(x - 1, y, cnt + 1)
@@ -152,7 +167,12 @@ class tetris(object) :
             tetris.dfsSerch(x, y + 1, cnt + 1)
 
         # 원상 복귀
-        tetris.Map[y][x] = tetris.missionColor
+        #print("pop 좌표 : " + str(y) + " " + str(x))
+        #tetris.minPathLocation.pop()
+        if tetris.tempFlag == 1 :
+            tetris.minPathLocation.append([y, x])
+
+        tetris.Map[y][x] = tempMap
 
     # key값 에 따른 움직임 함수
     def movePlay() :
@@ -177,28 +197,16 @@ class tetris(object) :
 
     # 맵 하단에 블럭의 위치 미리보기 해주는 기능
     def drawPreviewBlock(self) :
-        for k in range(10, 40) :
-            tmpF = 0
-            cntBlackBlock = 0
+        for k in range(int(tetris.blockY / 20), 37) :
             for i in range(3, 0, -1) :
                 yBlock = tetris.nowBlockShape[(tetris.changeBlockShape * 4) + i]
                 for j, xBlock in enumerate(yBlock):
-                    #if tetris.Map[k][int((tetris.blockX - 300) / 20) + j] == 0:
-                        #cntBlackBlock += 1
-                    #if (tetris.Map[k][int((tetris.blockX - 300) / 20) + j] >= 1 and xBlock >= 1) or (k == 39 and tetris.Map[k][int((tetris.blockX - 300) / 20) + j] >= 1) :
-                    if (tetris.Map[k][int((tetris.blockX - 300) / 20) + j] >= 1 and xBlock >= 1) :
-                        tmpF = 1
-                        break
-                    #elif tetris.Map[k][int((tetris.blockX - 300) / 20) + j] == 0 and k != 39 and cntBlackBlock >= 3 :
-                        #tmpF = 1
-                        #break
-                #if (k != 39 and cntBlackBlock == 0):
-                    #tmpF = 1
+                    if ((xBlock >= 1 and tetris.Map[k + i + 1][int((tetris.blockX - 300) / 20) + j] >= 1)
+                            or (k + 3 == tetris.mapRangeY - 2)) :
+                        previewY = k + 3
+                        self.drawBlock(1, tetris.nowBlockShape, tetris.WHITE, tetris.blockX, (previewY * 20) - 60)
+                        return
 
-            if tmpF == 0 :
-                tmpY = (k * 20) - 60
-                self.drawBlock(1, tetris.nowBlockShape, tetris.WHITE, tetris.blockX, tmpY)
-                return
 
     # block 모양을 그리는 함수
     def drawBlock(self, choiceBlkOrImg, shape, color, x, y) :
@@ -273,14 +281,14 @@ class tetris(object) :
         elif tetris.startPathX > 0 and tetris.startPathX < 30:
             tetris.screen.blit(tetris.missionStartImg, ((tetris.startPathX * 20) + 260 , (tetris.startPathY * 20) + 20))
         elif tetris.startPathX == 31 :
-            tetris.screen.blit(tetris.missionStartImg, ((tetris.startPathX * 20) + 260 , (tetris.startPathY * 20) - 20))
+            tetris.screen.blit(tetris.missionStartImg, ((tetris.startPathX * 20) + 300 , (tetris.startPathY * 20) - 20))
 
         if tetris.endPathX == 0 :
             tetris.screen.blit(tetris.missionEndImg, ((tetris.endPathX * 20) + 200 , (tetris.endPathY * 20) - 20))
         elif tetris.endPathX > 0 and tetris.endPathX < 30:
             tetris.screen.blit(tetris.missionEndImg, ((tetris.endPathX * 20) + 260 , (tetris.endPathY * 20) + 20))
         elif tetris.endPathX == 31 :
-            tetris.screen.blit(tetris.missionEndImg, ((tetris.endPathX * 20) + 260 , (tetris.endPathY * 20) - 20))
+            tetris.screen.blit(tetris.missionEndImg, ((tetris.endPathX * 20) + 300 , (tetris.endPathY * 20) - 20))
 
     # key 입력 이벤트 처리 함수
     def keyeEventProcess(self) :

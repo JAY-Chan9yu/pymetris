@@ -4,6 +4,7 @@ import math
 import random
 import blocklib
 import tetris
+import time
 
 if __name__ == "__main__":
     pygame.init()
@@ -14,6 +15,15 @@ if __name__ == "__main__":
     # 오른쪽 벽 채우기(오른쪽으로 더이상 이동 못하게)
     for i in range(0, game.mapRangeY) :
         game.Map[i][30] = 88
+    for i in range(27, 40) :
+        game.Map[i][14] = 4
+    for i in range(27, 40) :
+        game.Map[i][16] = 4
+    for i in range(1, 15) :
+        game.Map[27][i] = 4
+
+    game.Map[39][15] = 4
+    game.Map[39][16] = 4
 
     game.screen.blit(game.background, (0, 0))
     pygame.draw.rect(game.screen, game.BLACK, pygame.Rect(300, 0, 600, 800))
@@ -49,7 +59,9 @@ if __name__ == "__main__":
 
                 game.drawPreviewBlock()
             else :
-                pass
+                time.sleep(1)
+                game.missionClearEventFlag = 0
+                #pass
 
             # update screen
             pygame.display.flip()
