@@ -7,68 +7,49 @@ import tetris
 import time
 
 if __name__ == "__main__":
-    gameSequence = 0        # game play 진행 순서
-
     pygame.init()
     game = tetris.tetris()
-
-    '''# text 만들기
-    fontObj = pygame.font.Font('tetrisResource/font/NanumGothicBold.ttf', 32)
-    textSurfaceObj = fontObj.render('Hello Font!', True, game.GREEN)
-    textRectObj = textSurfaceObj.get_rect()
-    textRectObj.center = (150, 150)
-    game.screen.blit(textSurfaceObj, textRectObj)'''
+    game.gameSequence = 0        # game play 진행 순서
 
     while 1 :
-        # init view
-        if gameSequence == 0 :
-            pos = pygame.mouse.get_pos()
+        # init viewgameSequence
+        if game.gameSequence == 0 :
             game.screen.blit(game.initBackground, (0, 0))
-
-            # 버튼 선택 효과
-            if (pos[0] >= 465 and pos[0] <= 522) and ((pos[1] >= 380 and pos[1] <= 588)) :
-                game.screen.blit(game.bigStartImg, (455, 340))
-            else :
-                game.screen.blit(game.smallStartImg, (465, 380))
-
-            if (pos[0] >= 586 and pos[0] <= 643) and ((pos[1] >= 380 and pos[1] <= 588)) :
-                game.screen.blit(game.bigDescriptionImg, (576, 340))
-            else :
-                game.screen.blit(game.smallDescriptionImg, (586, 380))
-
-            if (pos[0] >= 715 and pos[0] <= 772) and ((pos[1] >= 380 and pos[1] <= 588)) :
-                game.screen.blit(game.bigEndImg, (705, 340))
-            else :
-                game.screen.blit(game.smallEndImg, (715, 380))
+            game.effectMenueBtn()
             pygame.display.flip()
 
             pageButton = game.clickButton()
             if pageButton == 1 :
-                gameSequence = 2
+                game.gameSequence = 2
                 game.gameInit()
             elif pageButton == 2 :
-                # gameSequence = 1
-                print('설명')
+                game.gameSequence = 1
             elif pageButton == 3 :
                 pygame.quit()
                 exit(0)
-
         # View game description
-        elif gameSequence == 1 :
-            pass
+        elif game.gameSequence == 1 :
+            pageButton = 0
+            game.screen.blit(game.descriptionBackground, (0, 0))
+            pygame.display.flip()
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    pos = pygame.mouse.get_pos()
+                    if (pos[0] >= 865 and pos[0] <= 1065) and ((pos[1] >= 90 and pos[1] <= 165)) :
+                        game.gameSequence = 0
+                elif event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit(0)
         # Play gmae
-        elif gameSequence == 2 :
+        elif game.gameSequence == 2 :
             game.blockTimer -= 1
             if game.blockTimer <= 0 :
                 game.blockTimer = game.blockTimer1
-
                 game.updateMap()
                 game.checkFillBlock()
-
                 if game.missionClearEventFlag == 0 :
                     # clean map
                     pygame.draw.rect(game.screen, game.BLACK, pygame.Rect(300, 0, 600, 800))
-
                     # draw background
                     game.drawBackbround()
                     # draw map
@@ -80,12 +61,11 @@ if __name__ == "__main__":
                     # draw preview block
                     game.drawPreviewBlock()
                 else :
+                    tetris.screen.blit(tetris.missionClearImg, (315, 250))
+                    pygame.display.flip()
                     time.sleep(3)
                     game.missionClearEventFlag = 0
-                    #pass
-
                 # update screen
                 pygame.display.flip()
-
             # key event
             game.keyeEventProcess()
