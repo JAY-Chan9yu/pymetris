@@ -8,6 +8,8 @@ import time
 
 if __name__ == "__main__":
     pygame.init()
+    pygame.mixer.music.load("tetrisResource/audio/bgm.mp3")
+    pygame.mixer.music.play(-1)
     game = tetris.tetris()
     game.gameSequence = 0        # game play 진행 순서
 
@@ -27,6 +29,7 @@ if __name__ == "__main__":
             elif pageButton == 3 :
                 pygame.quit()
                 exit(0)
+
         # View game description
         elif game.gameSequence == 1 :
             pageButton = 0
@@ -61,9 +64,6 @@ if __name__ == "__main__":
                     # draw preview block
                     game.drawPreviewBlock()
                 else :
-                    tetris.screen.blit(tetris.missionClearImg, (315, 250))
-                    pygame.display.flip()
-                    time.sleep(3)
                     game.missionClearEventFlag = 0
                 # update screen
                 pygame.display.flip()

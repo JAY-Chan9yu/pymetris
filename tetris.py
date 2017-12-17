@@ -6,7 +6,9 @@ import random
 import blocklib
 import time
 
+pygame.mixer.init()
 class tetris(object) :
+    btnSound = pygame.mixer.Sound("tetrisResource/audio/effect1.wav")
     # load images
     block = pygame.image.load("tetrisResource/image/block.jpg")
     missionStartImg = pygame.image.load("tetrisResource/image/Metro4_start.png")
@@ -46,7 +48,7 @@ class tetris(object) :
     metroImgs = ["Metro1_start" ,"Metro2_start", "Metro3_start" ,"Metro4_start", "Metro5_start" ,"Metro6_start",
                  "Metro1_end" ,"Metro2_end", "Metro3_end" ,"Metro4_end", "Metro5_end" ,"Metro6_end",]
 
-    stageLevel = 1                      # 게임 스테이지
+    stageLevel = 0                     # 게임 스테이지
 
     blockTimer = 5000                   # 게임 스피드
     blockTimer1 = 5000
@@ -94,7 +96,7 @@ class tetris(object) :
         # game 배경화면
         tetris.screen.blit(tetris.background, (0, 0))
         pygame.draw.rect(tetris.screen, tetris.BLACK, pygame.Rect(300, 0, 600, 800))
-        tetris.drawText(1050, 180,'스테이지 레벨 : '+ str(tetris.stageLevel), 35)
+        tetris.drawText(1050, 180,'스테이지 레벨 : '+ str(tetris.stageLevel + 1), 35)
         pygame.display.flip()
 
     # map 초기화
@@ -145,11 +147,17 @@ class tetris(object) :
         tetris.dfsSerch(tetris.startPathX, tetris.startPathY, 1)
         # 최단경로 나왔을경우  변수 및 화면 초기화
         if tetris.minPath < 999 :
-            '''# 최단경로 표시
+            tetris.screen.blit(tetris.missionClearImg, (315, 250))
+            tetris.drawText(390, 425,'10:20:24', 30)
+            tetris.drawText(598, 345, str(tetris.stageLevel + 1), 30)
+            tetris.drawText(815, 425, str(tetris.minPath), 30)
+            pygame.display.flip()
+            time.sleep(3)
+            # 최단경로 표시
             for i in tetris.minPathLocation :
                 tetris.screen.blit(tetris.previewBlockImg, ((i[1] * 20) + 300, (i[0] * 20)))
-                print(str(i[0]) + " " + str(i[1]))'''
-            tetris.minPath = 0
+                print(str(i[0]) + " " + str(i[1]))
+            tetris.minPath = 999
             tetris.stageLevel += 1
             # game clear 했을 경우
             if tetris.stageLevel > 4 :
@@ -184,39 +192,19 @@ class tetris(object) :
 
         tempMap = tetris.Map[y][x]
         tetris.Map[y][x] = 0
-        if x > 0 and tetris.Map[y][x - 1] == tetris.missionColor : # Left
-            tetris.dfsSerch(x - 1, y, cnt + 1)
         if x < tetris.mapRangeX - 3 and tetris.Map[y][x + 1] == tetris.missionColor : #Right
             tetris.dfsSerch(x + 1, y, cnt + 1)
-        if y > 0 and tetris.Map[y - 1][x] == tetris.missionColor : # Up
-            tetris.dfsSerch(x, y - 1, cnt + 1)
         if y < tetris.mapRangeY - 1 and tetris.Map[y + 1][x] == tetris.missionColor : # Down
             tetris.dfsSerch(x, y + 1, cnt + 1)
+        if y > 0 and tetris.Map[y - 1][x] == tetris.missionColor : # Up
+            tetris.dfsSerch(x, y - 1, cnt + 1)
+        if x > 0 and tetris.Map[y][x - 1] == tetris.missionColor : # Left
+            tetris.dfsSerch(x - 1, y, cnt + 1)
+
         # 원상 복귀
         if tetris.saveLocation == 1 :
             tetris.minPathLocation.append([y, x])
         tetris.Map[y][x] = tempMap
-
-    # key값 에 따른 움직임 함수
-    def movePlay() :
-        if tetris.keys[2] == 1 :
-            tetris.blockX -= 20
-            tetris.keys[2] = 0
-        elif tetris.keys[3] == 1 :
-            tetris.blockX += 20
-            tetris.keys[3] = 0
-        elif tetris.keys[0] == 2 :
-            tetris.changeBlockShape += 1
-            if tetris.changeBlockShape >= 4 :
-                tetris.changeBlockShape = 0
-            tetris.keys[0] = 0
-        elif tetris.keys[1] == 2 :
-            tetris.blockTimer1 = 1
-            tetris.fastDownFlag = 1
-            tetris.keys[1] = 0
-        elif tetris.keys[4] == 2 :
-            tetris.missionClearEvent()
-            tetris.keys[4] = 0
 
     @staticmethod
     def drawText(x, y, text, size) :
@@ -323,19 +311,49 @@ class tetris(object) :
         elif tetris.endPathX == 31 :
             tetris.screen.blit(tetris.missionEndImg, ((tetris.endPathX * 20) + 300 , (tetris.endPathY * 20) - 20))
 
+    moveLeftCnt = 0
+    moveRightCnt = 0
+    # key값 에 따른 움직임 함수
+    def movePlay() :
+        #print(tetris.keys[3])
+        if tetris.keys[2] == 1 and tetris.blockX > 300 and tetris.checkMoveL == 1 :
+            tetris.moveLeftCnt += 1
+            if(tetris.moveLeftCnt == 10000) :
+                tetris.blockX -= 20
+                tetris.moveLeftCnt = 0
+        elif tetris.keys[3] == 1 and tetris.blockX < 900 and tetris.checkMoveR == 1:
+            tetris.moveRightCnt += 1
+            if(tetris.moveRightCnt == 10000) :
+                tetris.blockX += 20
+                tetris.moveRightCnt = 0
+        elif tetris.keys[0] == 2 :
+            tetris.changeBlockShape += 1
+            if tetris.changeBlockShape >= 4 :
+                tetris.changeBlockShape = 0
+            tetris.keys[0] = 0
+        elif tetris.keys[1] == 2 :
+            tetris.blockTimer1 = 1
+            tetris.fastDownFlag = 1
+            tetris.keys[1] = 0
+        elif tetris.keys[4] == 2 :
+            tetris.missionClearEvent()
+            tetris.keys[4] = 0
+
     # key 입력 이벤트 처리 함수
+    @staticmethod
     def keyeEventProcess() :
         # loop through the events
         for event in pygame.event.get():
             # check if the event is the X button
             if event.type == pygame.KEYDOWN: # key가 눌렸을때
+                pygame.mixer.Sound.play(tetris.btnSound)
                 if event.key == K_UP and tetris.blockX < 840:
                     tetris.keys[0] = 1
                 elif event.key == K_DOWN:
                     tetris.keys[1] = 1
-                elif event.key == K_LEFT and tetris.blockX > 300 and tetris.checkMoveL == 1:
+                elif event.key == K_LEFT :
                     tetris.keys[2] = 1
-                elif event.key == K_RIGHT and tetris.blockX < 900 and tetris.checkMoveR == 1:
+                elif event.key == K_RIGHT:
                     tetris.keys[3] = 1
                 elif event.key == K_SPACE :
                     tetris.keys[4] = 1
@@ -346,9 +364,9 @@ class tetris(object) :
                 elif tetris.keys[1] == 1 and event.key == K_DOWN:
                     tetris.keys[1] = 2
                 elif tetris.keys[2] == 1 and event.key == K_LEFT:
-                    tetris.keys[2] = 0
+                    tetris.keys[2] = 2
                 elif tetris.keys[3] == 1 and event.key == K_RIGHT:
-                    tetris.keys[3] = 0
+                    tetris.keys[3] = 2
                 elif tetris.keys[4] == 1 and event.key == K_SPACE :
                     tetris.keys[4] = 2
 
@@ -375,9 +393,11 @@ class tetris(object) :
                     # 미션 실패(더 이상 내려올 곳이 없을때)
                     if tetris.blockY == 0 :
                         tetris.screen.blit(tetris.missionFailImg, (315, 250))
+                        tetris.drawText(390, 425,'10:20:24', 30)
+                        tetris.drawText(598, 345, str(tetris.stageLevel + 1), 30)
                         pygame.display.flip()
                         self.gameSequence = 0
-                        time.sleep(3)
+                        time.sleep(2)
                     tetris.copyBlockToMap()
                     tetris.blockX = 580
                     tetris.blockY = 0
@@ -392,8 +412,8 @@ class tetris(object) :
             if tetris.fastDownFlag == 0 :
                 tetris.blockY += 1
             else :
-                tetris.blockY -= (tetris.blockY % 5) # 20의 배수에서 checkFillBlock()을 실행하기 때문에
-                tetris.blockY += 5
+                tetris.blockY -= (tetris.blockY % 10) # 20의 배수에서 checkFillBlock()을 실행하기 때문에
+                tetris.blockY += 10
 
     # 한 라인이 꽊찼는지 확인하는 함수
     def checkFillBlock(self) :
@@ -429,30 +449,47 @@ class tetris(object) :
         return result
 
     # 버튼 선택 효과 보여주는 함수
+    btnSoundflag = 0
     @staticmethod
     def effectMenueBtn() :
         pos = pygame.mouse.get_pos()
-
+        #print(tetris.btnSoundflag)
         if (pos[0] >= 455 and pos[0] <= 522) and ((pos[1] >= 380 and pos[1] <= 588)) :
+            if tetris.btnSoundflag == 0 :
+                tetris.btnSoundflag = 1
+                pygame.mixer.Sound.play(tetris.btnSound)
             tetris.screen.blit(tetris.bigStartImg, (445, 340))
         else :
+            if tetris.btnSoundflag == 1 :
+                tetris.btnSunflag = 0
             tetris.screen.blit(tetris.smallStartImg, (455, 380))
 
         if (pos[0] >= 586 and pos[0] <= 643) and ((pos[1] >= 380 and pos[1] <= 588)) :
+            if tetris.btnSoundflag == 0 :
+                tetris.btnSoundflag = 2
+                pygame.mixer.Sound.play(tetris.btnSound)
             tetris.screen.blit(tetris.bigDescriptionImg, (576, 340))
         else :
+            if tetris.btnSoundflag == 2 :
+                tetris.btnSoundflag = 0
             tetris.screen.blit(tetris.smallDescriptionImg, (586, 380))
 
         if (pos[0] >= 715 and pos[0] <= 772) and ((pos[1] >= 380 and pos[1] <= 588)) :
+            if tetris.btnSoundflag == 0 :
+                tetris.btnSoundflag = 3
+                pygame.mixer.Sound.play(tetris.btnSound)
             tetris.screen.blit(tetris.bigEndImg, (705, 340))
         else :
             tetris.screen.blit(tetris.smallEndImg, (715, 380))
+            if tetris.btnSoundflag == 3 :
+                tetris.btnSoundflag = 0
+
 
     # 스테이지 별로 맵 바꿔주는 함수(리팩토링 예정)
     def stageChange(level) :
         for i in range(0, tetris.mapRangeY) :
             tetris.Map[i][30] = 88
-        if level == 1 :
+        if level == 0 :
             for i in range(0, 27) :
                 tetris.Map[39][i] = 4
                 tetris.Map[38][i] = 3
@@ -463,7 +500,7 @@ class tetris(object) :
                 tetris.Map[36][i] = 5
                 tetris.Map[33][i] = 4
                 tetris.Map[32][i] = 3
-        elif level == 2 :
+        elif level == 1 :
             for i in range(25, 40) :
                 tetris.Map[i][15] = 5
                 tetris.Map[i][14] = 5
@@ -478,7 +515,7 @@ class tetris(object) :
                 tetris.Map[i][1] = 6
                 tetris.Map[i][28] = 6
                 tetris.Map[i][29] = 6
-        elif level == 3 :
+        elif level == 2 :
             for i in range(0, 12) :
                 tetris.Map[39][i] = 4
                 tetris.Map[38][i] = 3
@@ -492,7 +529,7 @@ class tetris(object) :
             for i in range(27, 40) :
                 tetris.Map[i][14] = 5
                 tetris.Map[i][13] = 5
-        elif level == 4 :
+        elif level == 3 :
             for i in range(20, 40) :
                 if i % 2 == 0 :
                     for j in range(1, 29) :
@@ -500,3 +537,8 @@ class tetris(object) :
                 else :
                     for j in range(0, 28) :
                         tetris.Map[i][j] = random.randint(1, 6)
+        '''elif level == 0 :
+            for i in range(1, 15) :
+                tetris.Map[27][i] = 4
+            for i in range(27, 40) :
+                tetris.Map[i][14] = 4'''

@@ -137,13 +137,15 @@ while 1:
             elif event.key==pygame.K_d:
                 keys[3]=False
 
+
+
         if event.type==pygame.QUIT:
             # if it is quit the game
             pygame.quit()
             exit(0)
 
         if event.type==pygame.MOUSEBUTTONDOWN :
-            print(str(angle) + "index : " + str(index))# + " index1 : " + index1)
+            print(angle) + "index : " + str(index))# + " index1 : " + index1)
             position = pygame.mouse.get_pos()
             acc[1] += 1
             # 각도, x, y 좌표 추가
