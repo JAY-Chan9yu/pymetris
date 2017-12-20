@@ -5,9 +5,13 @@ import math
 import random
 import blocklib
 import time
+import requests
 
 pygame.mixer.init()
 class tetris(object) :
+    # 게임 결과(data)를 보낼 Server IP(local Test 중)
+    url = 'http://127.0.0.1:8000/'
+
     btnSound = pygame.mixer.Sound("tetrisResource/audio/effect1.wav")
     # load images
     block = pygame.image.load("tetrisResource/image/block.jpg")
@@ -147,6 +151,7 @@ class tetris(object) :
         tetris.dfsSerch(tetris.startPathX, tetris.startPathY, 1)
         # 최단경로 나왔을경우  변수 및 화면 초기화
         if tetris.minPath < 999 :
+            tetris.sendGameData() # send data to server
             tetris.screen.blit(tetris.missionClearImg, (315, 250))
             tetris.drawText(390, 425,'10:20:24', 30)
             tetris.drawText(598, 345, str(tetris.stageLevel + 1), 30)
@@ -370,8 +375,7 @@ class tetris(object) :
                 elif tetris.keys[4] == 1 and event.key == K_SPACE :
                     tetris.keys[4] = 2
 
-            if event.type == pygame.QUIT:
-                # if it is quit the game
+            if event.type == pygame.QUIT: # if it is quit the game
                 pygame.quit()
                 exit(0)
         tetris.movePlay()
@@ -484,12 +488,16 @@ class tetris(object) :
             if tetris.btnSoundflag == 3 :
                 tetris.btnSoundflag = 0
 
+    # 게임 데이터 서버로 전송
+    def sendGameData() :
+        obj={ "area" : '청주', "id" : 'JAY', "introduction" : 'test', "name" : '찬규', "party_number" : 99 }
+        res = requests.post(tetris.url, data = obj)
 
     # 스테이지 별로 맵 바꿔주는 함수(리팩토링 예정)
     def stageChange(level) :
         for i in range(0, tetris.mapRangeY) :
             tetris.Map[i][30] = 88
-        if level == 0 :
+        if level == 5 :
             for i in range(0, 27) :
                 tetris.Map[39][i] = 4
                 tetris.Map[38][i] = 3
@@ -537,8 +545,8 @@ class tetris(object) :
                 else :
                     for j in range(0, 28) :
                         tetris.Map[i][j] = random.randint(1, 6)
-        '''elif level == 0 :
+        elif level == 0 :
             for i in range(1, 15) :
                 tetris.Map[27][i] = 4
             for i in range(27, 40) :
-                tetris.Map[i][14] = 4'''
+                tetris.Map[i][14] = 4
