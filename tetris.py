@@ -490,8 +490,13 @@ class tetris(object) :
 
     # 게임 데이터 서버로 전송
     def sendGameData() :
-        obj={ "area" : '청주', "id" : 'JAY', "introduction" : 'test', "name" : '찬규', "party_number" : 99 }
+        tName = '지찬규'
+        tIntroduction = '테트리스 게임'
+        tgameScore = 89
+        tgameTime = 25
+        obj={ "name" : tName, "introduction" : tIntroduction, "gamescore" : tgameScore, "gametime" : tgameTime}
         res = requests.post(tetris.url, data = obj)
+
 
     # 스테이지 별로 맵 바꿔주는 함수(리팩토링 예정)
     def stageChange(level) :
