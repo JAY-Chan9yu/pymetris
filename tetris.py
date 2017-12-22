@@ -18,6 +18,7 @@ class tetris(object) :
     btnSound = pygame.mixer.Sound("tetrisResource/audio/effect1.wav")
     # load images
     block = pygame.image.load("tetrisResource/image/block.jpg")
+    line = pygame.image.load("tetrisResource/image/line.png")
     missionStartImg = pygame.image.load("tetrisResource/image/Metro4_start.png")
     missionEndImg = pygame.image.load("tetrisResource/image/Metro4_end.png")
     background = pygame.image.load("tetrisResource/image/background.jpg")
@@ -160,21 +161,37 @@ class tetris(object) :
         #pygame.display.flip()
         pass
 
+    # 게임 플레이 시간 현시
+    def showPlayTime() :
+        # 첫 시간 - 현재시간 = 실행시간
+        tmpTime = time.localtime()
+        playHour = tmpTime.tm_hour
+        playMin = tmpTime.tm_min
+        playSec = tmpTime.tm_sec
+        if tmpTime.tm_sec - tetris.gamePlayTime[0] < 0 :
+            playMin-= 1
+            playSec += 60
+        if tmpTime.tm_min - tetris.gamePlayTime[1] < 0 :
+            playHour -= 1
+            playMin += 60
+        tetris.drawText(390, 425, str(playHour - tetris.gamePlayTime[0]) + ':' + str(playMin - tetris.gamePlayTime[1]) +
+                                ':' + str(playSec - tetris.gamePlayTime[2]), 30)
+
     # 지하철 노선 연결하는 미션 체크하는 함수
     def missionClearEvent() :
         tetris.dfsSerch(tetris.startPathX, tetris.startPathY, 1)
         # 최단경로 나왔을경우  변수 및 화면 초기화
         if tetris.minPath < 999 :
             tetris.screen.blit(tetris.missionClearImg, (315, 250))
-            tetris.drawText(390, 425,'10:20:24', 30)
+            tetris.showPlayTime()
             tetris.drawText(598, 345, str(tetris.stageLevel + 1), 30)
             tetris.drawText(815, 425, str(tetris.minPath), 30)
-            pygame.display.flip()
-            time.sleep(3)
+            tetris.resultScore += tetris.minPath
             # 최단경로 표시
             for i in tetris.minPathLocation :
-                tetris.screen.blit(tetris.previewBlockImg, ((i[1] * 20) + 300, (i[0] * 20)))
-                print(str(i[0]) + " " + str(i[1]))
+                tetris.screen.blit(tetris.line, ((i[1] * 20) + 300, (i[0] * 20)))
+            pygame.display.flip()
+            time.sleep(3)
             tetris.minPath = 999
             tetris.stageLevel += 1
             # game clear 했을 경우
@@ -204,9 +221,11 @@ class tetris(object) :
                 tetris.minPath = cnt
                 tetris.minPathLocation.clear()
                 tetris.saveLocation = 1
+                tetris.minPathLocation.append([y, x])
             return
-        elif x == tetris.endPathX and y == tetris.endPathY - 1 :
-            tetris.saveLocation = 0
+        #->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>이 부분 수정해야함
+        #elif x != tetris.endPathX -1 and y != tetris.endPathY - 1 :
+        #    tetris.saveLocation = 0
 
         tempMap = tetris.Map[y][x]
         tetris.Map[y][x] = 0
@@ -410,15 +429,14 @@ class tetris(object) :
                     # 미션 실패(더 이상 내려올 곳이 없을때)
                     if tetris.blockY == 0 :
                         tetris.screen.blit(tetris.missionFailImg, (315, 250))
-                        tmpTime = time.localtime()
-                        tetris.drawText(390, 425, str(tetris.gamePlayTime[0] - tmpTime.tm_hour) + ':' + str(tetris.gamePlayTime[1] - tmpTime.tm_min) +
-                                        ':' + str(tetris.gamePlayTime[2] - tmpTime.tm_sec), 30)
+                        tetris.showPlayTime()
                         tetris.drawText(598, 345, str(tetris.stageLevel + 1), 30)
                         pygame.display.flip()
                         tetris.sendDataToServer = 1
+                        tetris.stageLevel = 0
                         self.gameSequence = 0
                         time.sleep(2)
-                    tetris.copyBlockToMap()
+                    tetris.copyBlock`ToMap()
                     tetris.blockX = 580
                     tetris.blockY = 0
                 # 블럭이 좌, 우로 이동 가능한지 체크
@@ -508,8 +526,8 @@ class tetris(object) :
     @staticmethod
     def sendGameData() :
         tName = 'default'
-        tIntroduction = '테트리스 게임'
-        tgameScore = 89
+        tIntroduction = '접속시간 : '
+        tgameScore = tetris.resultScore
         tgameTime = str(datetime.datetime.now())
         obj={ "name" : tName, "introduction" : tIntroduction + tgameTime, "gamescore" : tgameScore, "gametime" : 0}
         res = requests.post(tetris.url, data = obj)
@@ -572,7 +590,7 @@ class tetris(object) :
                     for j in range(0, 28) :
                         tetris.Map[i][j] = random.randint(1, 6)
         elif level == 0 :
-            for i in range(1, 15) :
+            for i in range(1, 10) :
                 tetris.Map[27][i] = 4
             for i in range(27, 40) :
-                tetris.Map[i][14] = 4
+                tetris.Map[i][9] = 4

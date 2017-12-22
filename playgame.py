@@ -20,6 +20,7 @@ if __name__ == "__main__":
             if game.sendDataToServer == 1 :
                 game.sendDataToServer = 0
                 game.sendGameData()
+                game.resultScore = 0
             game.screen.blit(game.initBackground, (0, 0))
             game.effectMenueBtn()
             pygame.display.flip()
