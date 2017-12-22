@@ -16,6 +16,10 @@ if __name__ == "__main__":
     while 1 :
         # init viewgameSequence
         if game.gameSequence == 0 :
+            # 서버로 데이터 전송(게임이 끝나서 메인화면으로 나올경우) -> 재도전 버튼누를경우도 추가해야함
+            if game.sendDataToServer == 1 :
+                game.sendDataToServer = 0
+                game.sendGameData()
             game.screen.blit(game.initBackground, (0, 0))
             game.effectMenueBtn()
             pygame.display.flip()

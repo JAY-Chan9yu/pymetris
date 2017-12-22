@@ -6,6 +6,9 @@ import random
 import blocklib
 import time
 import requests
+import threading
+import time
+import datetime
 
 pygame.mixer.init()
 class tetris(object) :
@@ -85,6 +88,10 @@ class tetris(object) :
 
     fastDownFlag = 0                    # 블럭 빨리 내리기
 
+    sendDataToServer = 0                # 서버로 데이터를 보내는 flag
+    gamePlayTime = []                   # 게임 진행 시간
+    resultScore = 0                     # 최종 게임 스코어
+
     # 생성자
     def __init__(self) :
         # 블럭 초기화
@@ -97,11 +104,18 @@ class tetris(object) :
         tetris.Map = [[0] * tetris.mapRangeX for row in range(tetris.mapRangeY)]
         tetris.nextBlockShape = blocklib.randBlock(random.randint(0, 3))
         tetris.stageChange(tetris.stageLevel)
+        # 게임 시작 시간 저장
+        tmpTime = time.localtime()
+        tetris.gamePlayTime.clear()
+        tetris.gamePlayTime.append(tmpTime.tm_hour)
+        tetris.gamePlayTime.append(tmpTime.tm_min)
+        tetris.gamePlayTime.append(tmpTime.tm_sec)
         # game 배경화면
         tetris.screen.blit(tetris.background, (0, 0))
         pygame.draw.rect(tetris.screen, tetris.BLACK, pygame.Rect(300, 0, 600, 800))
         tetris.drawText(1050, 180,'스테이지 레벨 : '+ str(tetris.stageLevel + 1), 35)
         pygame.display.flip()
+
 
     # map 초기화
     def mapInit() :
@@ -151,7 +165,6 @@ class tetris(object) :
         tetris.dfsSerch(tetris.startPathX, tetris.startPathY, 1)
         # 최단경로 나왔을경우  변수 및 화면 초기화
         if tetris.minPath < 999 :
-            tetris.sendGameData() # send data to server
             tetris.screen.blit(tetris.missionClearImg, (315, 250))
             tetris.drawText(390, 425,'10:20:24', 30)
             tetris.drawText(598, 345, str(tetris.stageLevel + 1), 30)
@@ -397,9 +410,12 @@ class tetris(object) :
                     # 미션 실패(더 이상 내려올 곳이 없을때)
                     if tetris.blockY == 0 :
                         tetris.screen.blit(tetris.missionFailImg, (315, 250))
-                        tetris.drawText(390, 425,'10:20:24', 30)
+                        tmpTime = time.localtime()
+                        tetris.drawText(390, 425, str(tetris.gamePlayTime[0] - tmpTime.tm_hour) + ':' + str(tetris.gamePlayTime[1] - tmpTime.tm_min) +
+                                        ':' + str(tetris.gamePlayTime[2] - tmpTime.tm_sec), 30)
                         tetris.drawText(598, 345, str(tetris.stageLevel + 1), 30)
                         pygame.display.flip()
+                        tetris.sendDataToServer = 1
                         self.gameSequence = 0
                         time.sleep(2)
                     tetris.copyBlockToMap()
@@ -489,14 +505,19 @@ class tetris(object) :
                 tetris.btnSoundflag = 0
 
     # 게임 데이터 서버로 전송
+    @staticmethod
     def sendGameData() :
-        tName = '지찬규'
+        tName = 'default'
         tIntroduction = '테트리스 게임'
         tgameScore = 89
-        tgameTime = 25
-        obj={ "name" : tName, "introduction" : tIntroduction, "gamescore" : tgameScore, "gametime" : tgameTime}
+        tgameTime = str(datetime.datetime.now())
+        obj={ "name" : tName, "introduction" : tIntroduction + tgameTime, "gamescore" : tgameScore, "gametime" : 0}
         res = requests.post(tetris.url, data = obj)
 
+    @staticmethod
+    def viewTimer() :
+        print(str(datetime.datetime.now()))
+        timer = threading.Timer(1, tetris.viewTimer)
 
     # 스테이지 별로 맵 바꿔주는 함수(리팩토링 예정)
     def stageChange(level) :
