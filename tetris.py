@@ -4,7 +4,7 @@ from pygame.locals import *
 import math
 import random
 import blocklib
-import time
+import datetime
 import requests
 import threading
 import time
@@ -17,23 +17,21 @@ class tetris(object) :
 
     btnSound = pygame.mixer.Sound("tetrisResource/audio/effect1.wav")
     # load images
+    _image_load = lambda x: pygame.image.load("tetrisResource/image/%s"%x)
     block = pygame.image.load("tetrisResource/image/block.jpg")
-    line = pygame.image.load("tetrisResource/image/line.png")
+    #line = pygame.image.load("tetrisResource/image/line.png")
+    line  = _image_load('line.png')
     missionStartImg = pygame.image.load("tetrisResource/image/Metro4_start.png")
     missionEndImg = pygame.image.load("tetrisResource/image/Metro4_end.png")
     background = pygame.image.load("tetrisResource/image/background.jpg")
     initBackground = pygame.image.load("tetrisResource/image/init_background.jpg")
     descriptionBackground = pygame.image.load("tetrisResource/image/description_background.jpg")
-    missionClearImg =pygame.image.load("tetrisResource/image/missionClearImg.png")
-    missionFailImg =pygame.image.load("tetrisResource/image/missionFailImg.png")
+    missionClearImg = pygame.image.load("tetrisResource/image/missionClearImg.png")
+    missionFailImg = pygame.image.load("tetrisResource/image/missionFailImg.png")
     previewBlockImg = pygame.image.load("tetrisResource/image/previewBlock.png")
     # 버튼 이미지 관련
-    bigStartImg =pygame.image.load("tetrisResource/image/bigStart.png")
-    smallStartImg =pygame.image.load("tetrisResource/image/smallStart.png")
-    bigEndImg =pygame.image.load("tetrisResource/image/bigEnd.png")
-    smallEndImg =pygame.image.load("tetrisResource/image/smallEnd.png")
-    bigDescriptionImg =pygame.image.load("tetrisResource/image/bigDescription.png")
-    smallDescriptionImg =pygame.image.load("tetrisResource/image/smallDescription.png")
+    bigStartImg, smallStartImg, bigEndImg, smallEndImg, bigDescriptionImg, smallDescriptionImg = map(_image_load, [
+        "bigStart.png", "smallStart.png", "bigEnd.png", "smallEnd.png", "bigDescription.png", "smallDescription.png" ])
 
     width, height = 1200, 900           # screen width, height
     screen = pygame.display.set_mode((width, height))
@@ -106,7 +104,8 @@ class tetris(object) :
         tetris.nextBlockShape = blocklib.randBlock(random.randint(0, 3))
         tetris.stageChange(tetris.stageLevel)
         # 게임 시작 시간 저장
-        tmpTime = time.localtime()
+        tmpTime =  time.localtime() #datetime.datetime.now() #time.localtime()
+        #tetris.gamePlayTime = tmpTime.timetuple()
         tetris.gamePlayTime.clear()
         tetris.gamePlayTime.append(tmpTime.tm_hour)
         tetris.gamePlayTime.append(tmpTime.tm_min)
@@ -116,7 +115,6 @@ class tetris(object) :
         pygame.draw.rect(tetris.screen, tetris.BLACK, pygame.Rect(300, 0, 600, 800))
         tetris.drawText(1050, 180,'스테이지 레벨 : '+ str(tetris.stageLevel + 1), 35)
         pygame.display.flip()
-
 
     # map 초기화
     def mapInit() :
@@ -133,19 +131,9 @@ class tetris(object) :
             for j in range(0, 4) :
                 # 지하철 노선에 따른 색깔
                 tempColor = 0
-                if tetris.blockColor == tetris.NAVY:
-                    tempColor = 1
-                elif tetris.blockColor == tetris.GREEN:
-                    tempColor = 2
-                elif tetris.blockColor == tetris.ORANGE :
-                    tempColor = 3
-                elif tetris.blockColor == tetris.BLUE :
-                    tempColor = 4
-                elif tetris.blockColor == tetris.PURPLE :
-                    tempColor = 5
-                elif tetris.blockColor == tetris.BROWN :
-                    tempColor = 6
-
+                for idx,x in enumerate(tetris.colors):
+                    if tetris.blockColor == x:
+                        tempColor = idx
                 if tetris.nowBlockShape[(tetris.changeBlockShape * 4) + i][j] >= 1 :
                     tetris.Map[int((tetris.blockY / 20) + i)][int(((tetris.blockX - 300) / 20) + j)] = tempColor
         tetris.mapInit()
@@ -164,7 +152,12 @@ class tetris(object) :
     # 게임 플레이 시간 현시
     def showPlayTime() :
         # 첫 시간 - 현재시간 = 실행시간
-        tmpTime = time.localtime()
+        tmpTime = time.localtime() #datetime.datetime.now() #time.localtime()
+        #td =tmpTime - tetris.gamePlayTime
+
+        #playHour = td.hour
+        #playMin = td.minute
+        #playSec = td.second
         playHour = tmpTime.tm_hour
         playMin = tmpTime.tm_min
         playSec = tmpTime.tm_sec
@@ -290,18 +283,8 @@ class tetris(object) :
             for j, xMap  in enumerate(yMap) :
                 tempColor = 0
                 # 지하철 노선에 따른 색깔
-                if xMap == 1:
-                    tempColor = tetris.colors[1]
-                elif xMap == 2:
-                    tempColor = tetris.colors[2]
-                elif xMap == 3 :
-                    tempColor = tetris.colors[3]
-                elif xMap == 4 :
-                    tempColor = tetris.colors[4]
-                elif xMap == 5 :
-                    tempColor = tetris.colors[5]
-                elif xMap == 6 :
-                    tempColor = tetris.colors[6]
+                if 0< xMap <= 6:
+                    tempColor = tetris.colors[xMap]
 
                 if xMap >= 1 and j < 30:
                     #pygame.draw.rect(screen, colors[random.randint(0,4)], pygame.Rect(tempX, tempY, 20, 20))
@@ -332,7 +315,6 @@ class tetris(object) :
         # mission start, end  표시
         pygame.draw.rect(tetris.screen, tetris.colors[tetris.missionColor], pygame.Rect((tetris.startPathX * 20) + 280, (tetris.startPathY * 20), 20, 20))
         pygame.draw.rect(tetris.screen, tetris.colors[tetris.missionColor], pygame.Rect((tetris.endPathX * 20) + 280, (tetris.endPathY * 20), 20, 20))
-
         # mission 경로 이미지 출력(각 호선별로 위치에 따라 다르게 출력)
         if tetris.startPathX == 0 :
             tetris.screen.blit(tetris.missionStartImg, ((tetris.startPathX * 20) + 200 , (tetris.startPathY * 20) - 20))
@@ -353,28 +335,28 @@ class tetris(object) :
     # key값 에 따른 움직임 함수
     def movePlay() :
         #print(tetris.keys[3])
-        if tetris.keys[2] == 1 and tetris.blockX > 300 and tetris.checkMoveL == 1 :
+        if tetris.keys[2] and tetris.blockX > 300 and tetris.checkMoveL == 1 :
             tetris.moveLeftCnt += 1
             if(tetris.moveLeftCnt == 10000) :
                 tetris.blockX -= 20
                 tetris.moveLeftCnt = 0
-        elif tetris.keys[3] == 1 and tetris.blockX < 900 and tetris.checkMoveR == 1:
+        elif tetris.keys[3]  and tetris.blockX < 900 and tetris.checkMoveR == 1:
             tetris.moveRightCnt += 1
             if(tetris.moveRightCnt == 10000) :
                 tetris.blockX += 20
                 tetris.moveRightCnt = 0
-        elif tetris.keys[0] == 2 :
-            tetris.changeBlockShape += 1
-            if tetris.changeBlockShape >= 4 :
-                tetris.changeBlockShape = 0
-            tetris.keys[0] = 0
-        elif tetris.keys[1] == 2 :
+        elif tetris.keys[0]  :
+            tetris.changeBlockShape  = (tetris.changeBlockShape +1) %4
+            #if tetris.changeBlockShape >= 4 :
+            #    tetris.changeBlockShape = 0
+            #tetris.keys[0] = 0
+        elif tetris.keys[1]  :
             tetris.blockTimer1 = 1
             tetris.fastDownFlag = 1
-            tetris.keys[1] = 0
-        elif tetris.keys[4] == 2 :
+            #tetris.keys[1] = 0
+        elif tetris.keys[4]  :
             tetris.missionClearEvent()
-            tetris.keys[4] = 0
+            #tetris.keys[4] = 0
 
     # key 입력 이벤트 처리 함수
     @staticmethod
@@ -384,28 +366,39 @@ class tetris(object) :
             # check if the event is the X button
             if event.type == pygame.KEYDOWN: # key가 눌렸을때
                 pygame.mixer.Sound.play(tetris.btnSound)
-                if event.key == K_UP and tetris.blockX < 840:
-                    tetris.keys[0] = 1
-                elif event.key == K_DOWN:
-                    tetris.keys[1] = 1
-                elif event.key == K_LEFT :
-                    tetris.keys[2] = 1
-                elif event.key == K_RIGHT:
-                    tetris.keys[3] = 1
-                elif event.key == K_SPACE :
-                    tetris.keys[4] = 1
+                oldval = tetris.keys
+                tetris.keys= [
+                    event.key == K_UP and tetris.blockX < 840,
+                    event.key == K_DOWN,
+                    event.key == K_LEFT,
+                    event.key == K_RIGHT,
+                    event.key == K_SPACE
+                ]
+                if oldval[0] :
+                    tetris.keys[0]=False
+
+                #if event.key == K_UP and tetris.blockX < 840:
+                #    tetris.keys[0] = 1
+                #elif event.key == K_DOWN:
+                #    tetris.keys[1] = 1
+                #elif event.key == K_LEFT :
+                #    tetris.keys[2] = 1
+                #elif event.key == K_RIGHT:
+                #    tetris.keys[3] = 1
+                #elif event.key == K_SPACE :
+                #    tetris.keys[4] = 1
 
             if event.type == pygame.KEYUP: # key가 떨어졌을때
-                if tetris.keys[0] == 1 and event.key == K_UP:
-                    tetris.keys[0] = 2
+                if tetris.keys[0] and event.key == K_UP:
+                    tetris.keys[0] = False
                 elif tetris.keys[1] == 1 and event.key == K_DOWN:
-                    tetris.keys[1] = 2
-                elif tetris.keys[2] == 1 and event.key == K_LEFT:
-                    tetris.keys[2] = 2
-                elif tetris.keys[3] == 1 and event.key == K_RIGHT:
-                    tetris.keys[3] = 2
-                elif tetris.keys[4] == 1 and event.key == K_SPACE :
-                    tetris.keys[4] = 2
+                    tetris.keys[1] = False
+                elif tetris.keys[2]  and event.key == K_LEFT:
+                    tetris.keys[2] = False
+                elif tetris.keys[3] and event.key == K_RIGHT:
+                    tetris.keys[3] = False
+                elif tetris.keys[4]  and event.key == K_SPACE :
+                    tetris.keys[4] = False
 
             if event.type == pygame.QUIT: # if it is quit the game
                 pygame.quit()
@@ -436,7 +429,7 @@ class tetris(object) :
                         tetris.stageLevel = 0
                         self.gameSequence = 0
                         time.sleep(2)
-                    tetris.copyBlock`ToMap()
+                    tetris.copyBlockToMap()
                     tetris.blockX = 580
                     tetris.blockY = 0
                 # 블럭이 좌, 우로 이동 가능한지 체크
@@ -486,41 +479,41 @@ class tetris(object) :
                 exit(0)
         return result
 
+    def _buildStartImage(x,y,z):
+        if x:
+            tetris.screen.blit(tetris.smallStartImg, (455, 380))
+        for _img, _pos in [(tetris.smallStartImg, (455, 380)), (tetris.smallEndImg, (715, 380)),(tetris.smallDescriptionImg, (586, 380))]:
+            tetris.screen.blit(_img, _pos)
+    def _play_btn_sound(flag):
+        if not flag:
+            pygame.mixer.Sound.play(tetris.btnSound)
+        return True
     # 버튼 선택 효과 보여주는 함수
-    btnSoundflag = 0
+    btnSoundflag = False
     @staticmethod
     def effectMenueBtn() :
         pos = pygame.mouse.get_pos()
         #print(tetris.btnSoundflag)
-        if (pos[0] >= 455 and pos[0] <= 522) and ((pos[1] >= 380 and pos[1] <= 588)) :
-            if tetris.btnSoundflag == 0 :
-                tetris.btnSoundflag = 1
-                pygame.mixer.Sound.play(tetris.btnSound)
-            tetris.screen.blit(tetris.bigStartImg, (445, 340))
-        else :
-            if tetris.btnSoundflag == 1 :
-                tetris.btnSunflag = 0
-            tetris.screen.blit(tetris.smallStartImg, (455, 380))
+        tetris.screen.blit(tetris.smallStartImg, (455, 380))
+        tetris.screen.blit(tetris.smallEndImg, (715, 380))
+        tetris.screen.blit(tetris.smallDescriptionImg, (586, 380))
 
-        if (pos[0] >= 586 and pos[0] <= 643) and ((pos[1] >= 380 and pos[1] <= 588)) :
-            if tetris.btnSoundflag == 0 :
-                tetris.btnSoundflag = 2
-                pygame.mixer.Sound.play(tetris.btnSound)
-            tetris.screen.blit(tetris.bigDescriptionImg, (576, 340))
-        else :
-            if tetris.btnSoundflag == 2 :
-                tetris.btnSoundflag = 0
-            tetris.screen.blit(tetris.smallDescriptionImg, (586, 380))
+        x_inx =[ 522 >=pos[0] >= 455 , 643 >= pos[0] >= 586,  772 >= pos[0] >= 715 ]
+        mapped =zip(x_inx , [( tetris.bigStartImg, (445, 340) ),
+                     ( tetris.bigDescriptionImg, (576, 340) ),
+                     ( tetris.bigEndImg, (705, 340) )] )
 
-        if (pos[0] >= 715 and pos[0] <= 772) and ((pos[1] >= 380 and pos[1] <= 588)) :
-            if tetris.btnSoundflag == 0 :
-                tetris.btnSoundflag = 3
-                pygame.mixer.Sound.play(tetris.btnSound)
-            tetris.screen.blit(tetris.bigEndImg, (705, 340))
-        else :
-            tetris.screen.blit(tetris.smallEndImg, (715, 380))
-            if tetris.btnSoundflag == 3 :
-                tetris.btnSoundflag = 0
+        if 588 >= pos[1] >= 380 :
+            if True in x_inx :
+                tetris.btnSoundflag = tetris._play_btn_sound(tetris.btnSoundflag)
+            else:
+                tetris.btnSoundflag = False
+            for j, k in mapped:
+                if j :
+                    tetris.screen.blit(k[0],k[1])
+        else:
+            tetris.btnSoundflag = False
+
 
     # 게임 데이터 서버로 전송
     @staticmethod
@@ -590,7 +583,7 @@ class tetris(object) :
                     for j in range(0, 28) :
                         tetris.Map[i][j] = random.randint(1, 6)
         elif level == 0 :
-            for i in range(1, 10) :
+            for i in range(1, 15) :
                 tetris.Map[27][i] = 4
             for i in range(27, 40) :
-                tetris.Map[i][9] = 4
+                tetris.Map[i][14] = 4

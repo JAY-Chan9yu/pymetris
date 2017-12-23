@@ -48,6 +48,7 @@ if __name__ == "__main__":
                 elif event.type == pygame.QUIT:
                     pygame.quit()
                     exit(0)
+
         # Play gmae
         elif game.gameSequence == 2 :
             game.blockTimer -= 1
