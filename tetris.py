@@ -14,21 +14,16 @@ pygame.mixer.init()
 class tetris(object) :
     # 게임 결과(data)를 보낼 Server IP(local Test 중)
     url = 'http://127.0.0.1:8000/'
-
+    # Load sounds
     btnSound = pygame.mixer.Sound("tetrisResource/audio/effect1.wav")
     # load images
     _image_load = lambda x: pygame.image.load("tetrisResource/image/%s"%x)
-    block = pygame.image.load("tetrisResource/image/block.jpg")
-    #line = pygame.image.load("tetrisResource/image/line.png")
-    line  = _image_load('line.png')
-    missionStartImg = pygame.image.load("tetrisResource/image/Metro4_start.png")
-    missionEndImg = pygame.image.load("tetrisResource/image/Metro4_end.png")
-    background = pygame.image.load("tetrisResource/image/background.jpg")
-    initBackground = pygame.image.load("tetrisResource/image/init_background.jpg")
-    descriptionBackground = pygame.image.load("tetrisResource/image/description_background.jpg")
-    missionClearImg = pygame.image.load("tetrisResource/image/missionClearImg.png")
-    missionFailImg = pygame.image.load("tetrisResource/image/missionFailImg.png")
-    previewBlockImg = pygame.image.load("tetrisResource/image/previewBlock.png")
+    # 블럭 관련 이미지
+    block, line, missionStartImg, missionEndImg, missionClearImg, missionFailImg, previewBlockImg = map(_image_load, [
+        "block.jpg", "line.png", "Metro4_start.png", "Metro4_end.png", "missionClearImg.png","missionFailImg.png","previewBlock.png"])
+    # Background 이미지
+    background, initBackground, descriptionBackground = map(_image_load, [
+        "background.jpg", "init_background.jpg", "description_background.jpg"])
     # 버튼 이미지 관련
     bigStartImg, smallStartImg, bigEndImg, smallEndImg, bigDescriptionImg, smallDescriptionImg = map(_image_load, [
         "bigStart.png", "smallStart.png", "bigEnd.png", "smallEnd.png", "bigDescription.png", "smallDescription.png" ])
@@ -59,7 +54,7 @@ class tetris(object) :
     blockTimer = 5000                   # 게임 스피드
     blockTimer1 = 5000
 
-    keys = [0, 0, 0, 0, 0]              # key 값 판단하는 리스트
+    keys = [False, False, False, False, False] # key 값 판단하는 리스트
 
     Map = []                            # 블럭 1개 = 20 x 20
 
@@ -285,7 +280,6 @@ class tetris(object) :
                 # 지하철 노선에 따른 색깔
                 if 0< xMap <= 6:
                     tempColor = tetris.colors[xMap]
-
                 if xMap >= 1 and j < 30:
                     #pygame.draw.rect(screen, colors[random.randint(0,4)], pygame.Rect(tempX, tempY, 20, 20))
                     pygame.draw.rect(tetris.screen, tempColor, pygame.Rect(tempX, tempY, 20, 20))
@@ -332,75 +326,45 @@ class tetris(object) :
 
     moveLeftCnt = 0
     moveRightCnt = 0
+    oldval = [False, False, False, False, False] # 이전 키 입력
     # key값 에 따른 움직임 함수
     def movePlay() :
-        #print(tetris.keys[3])
-        if tetris.keys[2] and tetris.blockX > 300 and tetris.checkMoveL == 1 :
+        if tetris.keys[2] and tetris.blockX > 300 and tetris.checkMoveL:
             tetris.moveLeftCnt += 1
             if(tetris.moveLeftCnt == 10000) :
                 tetris.blockX -= 20
                 tetris.moveLeftCnt = 0
-        elif tetris.keys[3]  and tetris.blockX < 900 and tetris.checkMoveR == 1:
+        elif tetris.keys[3]  and tetris.blockX < 900 and tetris.checkMoveR:
             tetris.moveRightCnt += 1
             if(tetris.moveRightCnt == 10000) :
                 tetris.blockX += 20
                 tetris.moveRightCnt = 0
-        elif tetris.keys[0]  :
-            tetris.changeBlockShape  = (tetris.changeBlockShape +1) %4
-            #if tetris.changeBlockShape >= 4 :
-            #    tetris.changeBlockShape = 0
-            #tetris.keys[0] = 0
-        elif tetris.keys[1]  :
+        elif tetris.oldval[0] != tetris.keys[0] : # 이전 입력과 현재입력이 다를때(중복실행 방지)
+            tetris.oldval = tetris.keys
+            tetris.changeBlockShape = (tetris.changeBlockShape + 1) % 4
+        elif tetris.oldval[1] != tetris.keys[1] :  # 이전 입력과 현재입력이 다를때(중복실행 방지)
+            tetris.oldval = tetris.keys
             tetris.blockTimer1 = 1
             tetris.fastDownFlag = 1
-            #tetris.keys[1] = 0
-        elif tetris.keys[4]  :
+        elif tetris.keys[4] :
             tetris.missionClearEvent()
-            #tetris.keys[4] = 0
 
     # key 입력 이벤트 처리 함수
     @staticmethod
     def keyeEventProcess() :
         # loop through the events
         for event in pygame.event.get():
-            # check if the event is the X button
-            if event.type == pygame.KEYDOWN: # key가 눌렸을때
+            # key가 눌렸을때
+            if event.type == pygame.KEYDOWN:
+                tetris.keys= [event.key == K_UP and tetris.blockX < 840, event.key == K_DOWN,
+                              event.key == K_LEFT, event.key == K_RIGHT, event.key == K_SPACE]
                 pygame.mixer.Sound.play(tetris.btnSound)
-                oldval = tetris.keys
-                tetris.keys= [
-                    event.key == K_UP and tetris.blockX < 840,
-                    event.key == K_DOWN,
-                    event.key == K_LEFT,
-                    event.key == K_RIGHT,
-                    event.key == K_SPACE
-                ]
-                if oldval[0] :
-                    tetris.keys[0]=False
-
-                #if event.key == K_UP and tetris.blockX < 840:
-                #    tetris.keys[0] = 1
-                #elif event.key == K_DOWN:
-                #    tetris.keys[1] = 1
-                #elif event.key == K_LEFT :
-                #    tetris.keys[2] = 1
-                #elif event.key == K_RIGHT:
-                #    tetris.keys[3] = 1
-                #elif event.key == K_SPACE :
-                #    tetris.keys[4] = 1
-
-            if event.type == pygame.KEYUP: # key가 떨어졌을때
-                if tetris.keys[0] and event.key == K_UP:
-                    tetris.keys[0] = False
-                elif tetris.keys[1] == 1 and event.key == K_DOWN:
-                    tetris.keys[1] = False
-                elif tetris.keys[2]  and event.key == K_LEFT:
-                    tetris.keys[2] = False
-                elif tetris.keys[3] and event.key == K_RIGHT:
-                    tetris.keys[3] = False
-                elif tetris.keys[4]  and event.key == K_SPACE :
-                    tetris.keys[4] = False
-
-            if event.type == pygame.QUIT: # if it is quit the game
+            # key가 떨어졌을때
+            if event.type == pygame.KEYUP:
+                for i in range(0, 5) :
+                    tetris.keys[i] = False
+            # if it is quit the game
+            if event.type == pygame.QUIT:
                 pygame.quit()
                 exit(0)
         tetris.movePlay()
@@ -468,52 +432,49 @@ class tetris(object) :
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
-                if (pos[0] >= 465 and pos[0] <= 522) and ((pos[1] >= 380 and pos[1] <= 588)) :
-                    result = 1
-                elif (pos[0] >= 586 and pos[0] <= 643) and ((pos[1] >= 380 and pos[1] <= 588)) :
-                    result = 2
-                elif (pos[0] >= 715 and pos[0] <= 772) and ((pos[1] >= 380 and pos[1] <= 588)) :
-                    result = 3
+                if 588 >= pos[1] >= 380 :
+                    indx = [(522 >= pos[0] >= 465),(643 >= pos[0] >= 586), (772 >= pos[0] >= 715)]
+                    for i, _indx in enumerate(indx) :
+                        if _indx :
+                            result = i + 1
             elif event.type == pygame.QUIT:
                 pygame.quit()
                 exit(0)
         return result
 
+    # 버튼 선택 효과 보여주는 함수 들
     def _buildStartImage(x,y,z):
         if x:
             tetris.screen.blit(tetris.smallStartImg, (455, 380))
         for _img, _pos in [(tetris.smallStartImg, (455, 380)), (tetris.smallEndImg, (715, 380)),(tetris.smallDescriptionImg, (586, 380))]:
             tetris.screen.blit(_img, _pos)
+
     def _play_btn_sound(flag):
         if not flag:
             pygame.mixer.Sound.play(tetris.btnSound)
         return True
-    # 버튼 선택 효과 보여주는 함수
+
     btnSoundflag = False
     @staticmethod
     def effectMenueBtn() :
         pos = pygame.mouse.get_pos()
-        #print(tetris.btnSoundflag)
-        tetris.screen.blit(tetris.smallStartImg, (455, 380))
-        tetris.screen.blit(tetris.smallEndImg, (715, 380))
-        tetris.screen.blit(tetris.smallDescriptionImg, (586, 380))
-
         x_inx =[ 522 >=pos[0] >= 455 , 643 >= pos[0] >= 586,  772 >= pos[0] >= 715 ]
-        mapped =zip(x_inx , [( tetris.bigStartImg, (445, 340) ),
-                     ( tetris.bigDescriptionImg, (576, 340) ),
-                     ( tetris.bigEndImg, (705, 340) )] )
+        b_mapped =zip(x_inx , [(tetris.bigStartImg, (445, 340)), (tetris.bigDescriptionImg, (576, 340)), (tetris.bigEndImg, (705, 340) )])
+        s_mapped = [(tetris.smallStartImg, (455, 380)), (tetris.smallEndImg, (715, 380)), (tetris.smallDescriptionImg, (586, 380))]
+
+        for k in s_mapped :
+            tetris.screen.blit(k[0], k[1])
 
         if 588 >= pos[1] >= 380 :
             if True in x_inx :
                 tetris.btnSoundflag = tetris._play_btn_sound(tetris.btnSoundflag)
             else:
                 tetris.btnSoundflag = False
-            for j, k in mapped:
+            for j, k in b_mapped:
                 if j :
                     tetris.screen.blit(k[0],k[1])
         else:
             tetris.btnSoundflag = False
-
 
     # 게임 데이터 서버로 전송
     @staticmethod
