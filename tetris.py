@@ -267,7 +267,7 @@ class tetris(object) :
                 tempX += 20
 
     # 게임과 관계 없는 화면에 배경을 그려주는 함수
-    def insertImgPosition(x, y, Mapped, image) :
+    def insertImgPosition(x, y, image) :
         _indx = lambda xy : xy * 20
         Mapped = [(_indx(x) + 200 , _indx(y) - 20), (_indx(x) + 260 , _indx(y) + 20), (_indx(x) + 300 , _indx(y) - 20)]
         positionMapped = [x == 0, 30 > x > 0, x == 31]
@@ -299,9 +299,8 @@ class tetris(object) :
         pygame.draw.rect(tetris.screen, tetris.colors[tetris.missionColor], pygame.Rect((tetris.startPathX * 20) + 280, (tetris.startPathY * 20), 20, 20))
         pygame.draw.rect(tetris.screen, tetris.colors[tetris.missionColor], pygame.Rect((tetris.endPathX * 20) + 280, (tetris.endPathY * 20), 20, 20))
         # mission 경로 이미지 출력(각 호선별로 위치에 따라 다르게 출력)
-        Mapped = []
-        tetris.insertImgPosition(tetris.startPathX, tetris.startPathY, Mapped, tetris.missionStartImg)
-        tetris.insertImgPosition(tetris.endPathX, tetris.endPathY, Mapped, tetris.missionEndImg)
+        tetris.insertImgPosition(tetris.startPathX, tetris.startPathY, tetris.missionStartImg)
+        tetris.insertImgPosition(tetris.endPathX, tetris.endPathY, tetris.missionEndImg)
 
     moveLeftCnt = 0
     moveRightCnt = 0
@@ -401,7 +400,6 @@ class tetris(object) :
                 for t in range(i, 1, -1) :
                     for k in range(0, 31) :
                         tetris.Map[t][k] = tetris.Map[t - 1][k]
-                    for k in range(0, 31) :
                         tetris.Map[0][k] = 0
             checkLine = 0
 
@@ -437,8 +435,8 @@ class tetris(object) :
     @staticmethod
     def effectMenueBtn() :
         pos = pygame.mouse.get_pos()
-        x_inx =[ 522 >=pos[0] >= 455 , 643 >= pos[0] >= 586,  772 >= pos[0] >= 715 ]
-        b_mapped =zip(x_inx , [(tetris.bigStartImg, (445, 340)), (tetris.bigDescriptionImg, (576, 340)), (tetris.bigEndImg, (705, 340) )])
+        x_inx =[ 522 >= pos[0] >= 455 , 643 >= pos[0] >= 586,  772 >= pos[0] >= 715 ]
+        b_mapped = zip(x_inx , [(tetris.bigStartImg, (445, 340)), (tetris.bigDescriptionImg, (576, 340)), (tetris.bigEndImg, (705, 340) )])
         s_mapped = [(tetris.smallStartImg, (455, 380)), (tetris.smallEndImg, (715, 380)), (tetris.smallDescriptionImg, (586, 380))]
 
         for k in s_mapped :
@@ -455,10 +453,35 @@ class tetris(object) :
         else:
             tetris.btnSoundflag = False
 
-    # 게임 데이터 서버로 전송
+    # description 페이지 관련 메소드(사용자 정보 입력 등)
+    gameID = []
+    def inputInform(self) :
+        tmpChar  = ''
+        tetris.drawText(390, 635, ''.join(tetris.gameID), 27)
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                inputKey = [K_a, K_b, K_c, K_d, K_e, K_f, K_g, K_h, K_i, K_j, K_k, K_l, K_m,
+                            K_n, K_o, K_p, K_q, K_r, K_s, K_t, K_u, K_v, K_w, K_x, K_y, K_z]
+                for i, inputChar in enumerate(inputKey) :
+                    if event.key == inputChar and len(tetris.gameID) < 25 :
+                        tmpChar = ord('a') + i
+                        tetris.gameID.append(chr(tmpChar))
+                if event.key == K_BACKSPACE and len(tetris.gameID) > 0 :
+                    tetris.gameID.pop()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                if (1065 >= pos[0] >= 865) and (165 >= pos[1] >= 90) :
+                    self.gameSequence = 0
+
+            elif event.type == pygame.QUIT:
+                pygame.quit()
+                exit(0)
+
+    #게임 데이터 서버로 전송
     @staticmethod
     def sendGameData() :
-        tName = 'default'
+        tName = ''.join(tetris.gameID)
         tIntroduction = '접속시간 : '
         tgameScore = tetris.resultScore
         tgameTime = str(datetime.datetime.now())

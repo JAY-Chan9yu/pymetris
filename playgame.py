@@ -34,21 +34,12 @@ if __name__ == "__main__":
             elif pageButton == 3 :
                 pygame.quit()
                 exit(0)
-
         # View game description
         elif game.gameSequence == 1 :
             pageButton = 0
             game.screen.blit(game.descriptionBackground, (0, 0))
+            game.inputInform()
             pygame.display.flip()
-            for event in pygame.event.get():
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    pos = pygame.mouse.get_pos()
-                    if (1065 >= pos[0] >= 865) and (165 >= pos[1] >= 90) :
-                        game.gameSequence = 0
-                elif event.type == pygame.QUIT:
-                    pygame.quit()
-                    exit(0)
-
         # Play gmae
         elif game.gameSequence == 2 :
             game.blockTimer -= 1
