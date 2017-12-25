@@ -43,7 +43,7 @@ if __name__ == "__main__":
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
-                    if (pos[0] >= 865 and pos[0] <= 1065) and ((pos[1] >= 90 and pos[1] <= 165)) :
+                    if (1065 >= pos[0] >= 865) and (165 >= pos[1] >= 90) :
                         game.gameSequence = 0
                 elif event.type == pygame.QUIT:
                     pygame.quit()

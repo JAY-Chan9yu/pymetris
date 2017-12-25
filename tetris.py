@@ -2,6 +2,7 @@
 import pygame
 from pygame.locals import *
 import math
+from math import floor
 import random
 import blocklib
 import datetime
@@ -99,12 +100,7 @@ class tetris(object) :
         tetris.nextBlockShape = blocklib.randBlock(random.randint(0, 3))
         tetris.stageChange(tetris.stageLevel)
         # 게임 시작 시간 저장
-        tmpTime =  time.localtime() #datetime.datetime.now() #time.localtime()
-        #tetris.gamePlayTime = tmpTime.timetuple()
-        tetris.gamePlayTime.clear()
-        tetris.gamePlayTime.append(tmpTime.tm_hour)
-        tetris.gamePlayTime.append(tmpTime.tm_min)
-        tetris.gamePlayTime.append(tmpTime.tm_sec)
+        tetris.gamePlayTime = time.time()
         # game 배경화면
         tetris.screen.blit(tetris.background, (0, 0))
         pygame.draw.rect(tetris.screen, tetris.BLACK, pygame.Rect(300, 0, 600, 800))
@@ -147,37 +143,27 @@ class tetris(object) :
     # 게임 플레이 시간 현시
     def showPlayTime() :
         # 첫 시간 - 현재시간 = 실행시간
-        tmpTime = time.localtime() #datetime.datetime.now() #time.localtime()
-        #td =tmpTime - tetris.gamePlayTime
-
-        #playHour = td.hour
-        #playMin = td.minute
-        #playSec = td.second
-        playHour = tmpTime.tm_hour
-        playMin = tmpTime.tm_min
-        playSec = tmpTime.tm_sec
-        if tmpTime.tm_sec - tetris.gamePlayTime[0] < 0 :
-            playMin-= 1
-            playSec += 60
-        if tmpTime.tm_min - tetris.gamePlayTime[1] < 0 :
-            playHour -= 1
-            playMin += 60
-        tetris.drawText(390, 425, str(playHour - tetris.gamePlayTime[0]) + ':' + str(playMin - tetris.gamePlayTime[1]) +
-                                ':' + str(playSec - tetris.gamePlayTime[2]), 30)
+        tmpTime = time.time() - tetris.gamePlayTime
+        tmHour = tmpTime / 3600
+        tmMin = (tmpTime % 3600) / 60
+        tmSec = (tmpTime % 3600) % 60
+        tetris.drawText(390, 425, str(floor(tmHour)) + ':' + str(floor(tmMin)) + ':' + str(floor(tmSec)), 30)
 
     # 지하철 노선 연결하는 미션 체크하는 함수
     def missionClearEvent() :
         tetris.dfsSerch(tetris.startPathX, tetris.startPathY, 1)
         # 최단경로 나왔을경우  변수 및 화면 초기화
         if tetris.minPath < 999 :
-            tetris.screen.blit(tetris.missionClearImg, (315, 250))
-            tetris.showPlayTime()
-            tetris.drawText(598, 345, str(tetris.stageLevel + 1), 30)
-            tetris.drawText(815, 425, str(tetris.minPath), 30)
-            tetris.resultScore += tetris.minPath
             # 최단경로 표시
             for i in tetris.minPathLocation :
                 tetris.screen.blit(tetris.line, ((i[1] * 20) + 300, (i[0] * 20)))
+                print(str(i[0]) + ',' + str(i[1]))
+            # 점수, 실행시간 표시
+            tetris.screen.blit(tetris.missionClearImg, (315, 250))
+            tetris.drawText(598, 345, str(tetris.stageLevel + 1), 30)
+            tetris.drawText(815, 425, str(tetris.minPath), 30)
+            tetris.showPlayTime()
+            tetris.resultScore += tetris.minPath
             pygame.display.flip()
             time.sleep(3)
             tetris.minPath = 999
@@ -193,8 +179,8 @@ class tetris(object) :
             tetris.startPathY = blocklib.stageLevel[tetris.stageLevel][1]
             tetris.endPathX = blocklib.stageLevel[tetris.stageLevel][2]
             tetris.endPathY = blocklib.stageLevel[tetris.stageLevel][3]
-            tetris.missionStartImg = pygame.image.load("tetrisResource/image/" + tetris.metroImgs[tetris.missionColor - 1] + ".png")
-            tetris.missionEndImg = pygame.image.load("tetrisResource/image/" + tetris.metroImgs[(tetris.missionColor - 1) + 6] +".png")
+            tetris.missionStartImg = tetris._image_load(tetris.metroImgs[tetris.missionColor - 1] + ".png")
+            tetris.missionEndImg = tetris._image_load(tetris.metroImgs[(tetris.missionColor - 1) + 6] +".png")
             tetris.missionClearEventFlag = 1
             tetris.Map.clear()
             tetris.Map = [[0] * tetris.mapRangeX for row in range(tetris.mapRangeY)]
@@ -202,34 +188,29 @@ class tetris(object) :
             tetris.gameInit()
 
     # 최단거리 탐색(DFS)
+    tempPath = []
     def dfsSerch(x, y, cnt) :
         # 최단거리 업데이트
-        if x == tetris.endPathX - 1 and y == tetris.endPathY - 1 :
-            if cnt < tetris.minPath :
-                tetris.minPath = cnt
-                tetris.minPathLocation.clear()
-                tetris.saveLocation = 1
-                tetris.minPathLocation.append([y, x])
-            return
-        #->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>이 부분 수정해야함
-        #elif x != tetris.endPathX -1 and y != tetris.endPathY - 1 :
-        #    tetris.saveLocation = 0
+        if tetris.Map[y][x] == tetris.missionColor :
+            tetris.tempPath.append([y, x]) # 경로 추가
+            if x == tetris.endPathX - 1 and y == tetris.endPathY - 1 :
+                #print("===================")
+                #for i in tetris.tempPath :
+                    #print(str(i[0]) + ', ' + str(i[1]))
+                if cnt < tetris.minPath :
+                    tetris.minPath = cnt
+                    tetris.minPathLocation.clear()
+                    tetris.minPathLocation = list(tetris.tempPath)
+            tempMap = tetris.Map[y][x]
+            tetris.Map[y][x] = 0
+            checkMapped = [x < tetris.mapRangeX - 3, y < tetris.mapRangeY - 1, y > 0, x > 0]
+            gotoMapped = [(x + 1, y), (x, y + 1), (x, y - 1), (x - 1, y)]
+            for i, _map in enumerate(checkMapped) :
+                if _map :
+                    tetris.dfsSerch(gotoMapped[i][0], gotoMapped[i][1], cnt + 1)
 
-        tempMap = tetris.Map[y][x]
-        tetris.Map[y][x] = 0
-        if x < tetris.mapRangeX - 3 and tetris.Map[y][x + 1] == tetris.missionColor : #Right
-            tetris.dfsSerch(x + 1, y, cnt + 1)
-        if y < tetris.mapRangeY - 1 and tetris.Map[y + 1][x] == tetris.missionColor : # Down
-            tetris.dfsSerch(x, y + 1, cnt + 1)
-        if y > 0 and tetris.Map[y - 1][x] == tetris.missionColor : # Up
-            tetris.dfsSerch(x, y - 1, cnt + 1)
-        if x > 0 and tetris.Map[y][x - 1] == tetris.missionColor : # Left
-            tetris.dfsSerch(x - 1, y, cnt + 1)
-
-        # 원상 복귀
-        if tetris.saveLocation == 1 :
-            tetris.minPathLocation.append([y, x])
-        tetris.Map[y][x] = tempMap
+            tetris.tempPath.pop() # 이미 체크한 경로 삭제
+            tetris.Map[y][x] = tempMap
 
     @staticmethod
     def drawText(x, y, text, size) :
@@ -286,6 +267,14 @@ class tetris(object) :
                 tempX += 20
 
     # 게임과 관계 없는 화면에 배경을 그려주는 함수
+    def insertImgPosition(x, y, Mapped, image) :
+        _indx = lambda xy : xy * 20
+        Mapped = [(_indx(x) + 200 , _indx(y) - 20), (_indx(x) + 260 , _indx(y) + 20), (_indx(x) + 300 , _indx(y) - 20)]
+        positionMapped = [x == 0, 30 > x > 0, x == 31]
+        for i, m in enumerate(positionMapped) :
+            if m :
+                tetris.screen.blit(image, (Mapped[i][0], Mapped[i][1]))
+
     @staticmethod
     def drawBackbround() :
         tempN = 0
@@ -310,19 +299,9 @@ class tetris(object) :
         pygame.draw.rect(tetris.screen, tetris.colors[tetris.missionColor], pygame.Rect((tetris.startPathX * 20) + 280, (tetris.startPathY * 20), 20, 20))
         pygame.draw.rect(tetris.screen, tetris.colors[tetris.missionColor], pygame.Rect((tetris.endPathX * 20) + 280, (tetris.endPathY * 20), 20, 20))
         # mission 경로 이미지 출력(각 호선별로 위치에 따라 다르게 출력)
-        if tetris.startPathX == 0 :
-            tetris.screen.blit(tetris.missionStartImg, ((tetris.startPathX * 20) + 200 , (tetris.startPathY * 20) - 20))
-        elif tetris.startPathX > 0 and tetris.startPathX < 30:
-            tetris.screen.blit(tetris.missionStartImg, ((tetris.startPathX * 20) + 260 , (tetris.startPathY * 20) + 20))
-        elif tetris.startPathX == 31 :
-            tetris.screen.blit(tetris.missionStartImg, ((tetris.startPathX * 20) + 300 , (tetris.startPathY * 20) - 20))
-
-        if tetris.endPathX == 0 :
-            tetris.screen.blit(tetris.missionEndImg, ((tetris.endPathX * 20) + 200 , (tetris.endPathY * 20) - 20))
-        elif tetris.endPathX > 0 and tetris.endPathX < 30:
-            tetris.screen.blit(tetris.missionEndImg, ((tetris.endPathX * 20) + 260 , (tetris.endPathY * 20) + 20))
-        elif tetris.endPathX == 31 :
-            tetris.screen.blit(tetris.missionEndImg, ((tetris.endPathX * 20) + 300 , (tetris.endPathY * 20) - 20))
+        Mapped = []
+        tetris.insertImgPosition(tetris.startPathX, tetris.startPathY, Mapped, tetris.missionStartImg)
+        tetris.insertImgPosition(tetris.endPathX, tetris.endPathY, Mapped, tetris.missionEndImg)
 
     moveLeftCnt = 0
     moveRightCnt = 0
@@ -331,12 +310,12 @@ class tetris(object) :
     def movePlay() :
         if tetris.keys[2] and tetris.blockX > 300 and tetris.checkMoveL:
             tetris.moveLeftCnt += 1
-            if(tetris.moveLeftCnt == 10000) :
+            if tetris.moveLeftCnt == 10000 :
                 tetris.blockX -= 20
                 tetris.moveLeftCnt = 0
-        elif tetris.keys[3]  and tetris.blockX < 900 and tetris.checkMoveR:
+        elif tetris.keys[3] and tetris.blockX < 900 and tetris.checkMoveR:
             tetris.moveRightCnt += 1
-            if(tetris.moveRightCnt == 10000) :
+            if tetris.moveRightCnt == 10000 :
                 tetris.blockX += 20
                 tetris.moveRightCnt = 0
         elif tetris.oldval[0] != tetris.keys[0] : # 이전 입력과 현재입력이 다를때(중복실행 방지)
@@ -472,7 +451,7 @@ class tetris(object) :
                 tetris.btnSoundflag = False
             for j, k in b_mapped:
                 if j :
-                    tetris.screen.blit(k[0],k[1])
+                    tetris.screen.blit(k[0], k[1])
         else:
             tetris.btnSoundflag = False
 
@@ -544,7 +523,10 @@ class tetris(object) :
                     for j in range(0, 28) :
                         tetris.Map[i][j] = random.randint(1, 6)
         elif level == 0 :
-            for i in range(1, 15) :
+            for i in range(1, 18) :
                 tetris.Map[27][i] = 4
             for i in range(27, 40) :
                 tetris.Map[i][14] = 4
+                tetris.Map[i][17] = 4
+            tetris.Map[39][16] = 4
+            tetris.Map[39][15] = 4
