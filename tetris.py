@@ -20,8 +20,8 @@ class tetris(object) :
     # load images
     _image_load = lambda x: pygame.image.load("tetrisResource/image/%s"%x)
     # 블럭 관련 이미지
-    block, line, missionStartImg, missionEndImg, missionClearImg, missionFailImg, previewBlockImg = map(_image_load, [
-        "block.jpg", "line.png", "Metro4_start.png", "Metro4_end.png", "missionClearImg.png","missionFailImg.png","previewBlock.png"])
+    block, line, missionStartImg, missionEndImg, missionClearImg, missionFailImg, previewBlockImg, gameClearImg = map(_image_load, [
+        "block.jpg", "line.png", "Metro4_start.png", "Metro4_end.png", "missionClearImg.png","missionFailImg.png","previewBlock.png", "gameClearImg.png"])
     # Background 이미지
     background, initBackground, descriptionBackground = map(_image_load, [
         "background.jpg", "init_background.jpg", "description_background.jpg"])
@@ -96,6 +96,8 @@ class tetris(object) :
     @staticmethod
     def gameInit() :
         tetris.mapInit()
+        tetris.missionClearEventFlag = 0
+        tetris.gameClearMessage = ''
         tetris.Map = [[0] * tetris.mapRangeX for row in range(tetris.mapRangeY)]
         tetris.nextBlockShape = blocklib.randBlock(random.randint(0, 3))
         tetris.stageChange(tetris.stageLevel)
@@ -104,6 +106,7 @@ class tetris(object) :
         # game 배경화면
         tetris.screen.blit(tetris.background, (0, 0))
         pygame.draw.rect(tetris.screen, tetris.BLACK, pygame.Rect(300, 0, 600, 800))
+        #tetris.stageLevel = 0
         tetris.drawText(1050, 180,'스테이지 레벨 : '+ str(tetris.stageLevel + 1), 35)
         pygame.display.flip()
 
@@ -129,16 +132,19 @@ class tetris(object) :
                     tetris.Map[int((tetris.blockY / 20) + i)][int(((tetris.blockX - 300) / 20) + j)] = tempColor
         tetris.mapInit()
 
-    def gameClearEvent() :
-        pass
-
-    # mission cleear 했다는 이미지 띄우고 3초 뒤에 다음스테이지로 넘어가게 함
-    @staticmethod
-    def drawMissionClearEvent() :
-        #tetris.screen.blit(tetris.initBackground, (0, 0))
-        #tetris.drawText(1050, 180,'최단거리 : '+ str(tetris.stageLevel), 30)
-        #pygame.display.flip()
-        pass
+    # 모든 스테이지를 끝냈을때
+    gameClearMessage = ''
+    def gameClearEvent(self) :
+        if tetris.gameClearFlag :
+            tetris.gameClearFlag = 0
+            tetris.gameClearMessage = ' [* MVP *]'
+            tetris.screen.blit(tetris.gameClearImg, (400, 250))
+            pygame.display.flip()
+            self.sendDataToServer = 1
+            tetris.missionClearEventFlag = 1
+            tetris.stageLevel = 0
+            self.gameSequence = 0
+            time.sleep(2)
 
     # 게임 플레이 시간 현시
     def showPlayTime() :
@@ -155,36 +161,33 @@ class tetris(object) :
         # 최단경로 나왔을경우  변수 및 화면 초기화
         if tetris.minPath < 999 :
             # 최단경로 표시
+            tetris.resultScore += tetris.minPath
             for i in tetris.minPathLocation :
                 tetris.screen.blit(tetris.line, ((i[1] * 20) + 300, (i[0] * 20)))
-                print(str(i[0]) + ',' + str(i[1]))
-            # 점수, 실행시간 표시
-            tetris.screen.blit(tetris.missionClearImg, (315, 250))
-            tetris.drawText(598, 345, str(tetris.stageLevel + 1), 30)
-            tetris.drawText(815, 425, str(tetris.minPath), 30)
-            tetris.showPlayTime()
-            tetris.resultScore += tetris.minPath
-            pygame.display.flip()
-            time.sleep(3)
-            tetris.minPath = 999
             tetris.stageLevel += 1
             # game clear 했을 경우
-            if tetris.stageLevel > 4 :
+            if tetris.stageLevel > 3 :
                 tetris.gameClearFlag = 1
-                tetris.gameClearEvent()
-                return
+                #tetris.gameClearEvent()
+            else :
+                # 점수, 실행시간 표시
+                tetris.screen.blit(tetris.missionClearImg, (315, 250))
+                tetris.drawText(598, 345, str(tetris.stageLevel), 30)
+                tetris.drawText(815, 425, str(tetris.minPath), 30)
+                tetris.showPlayTime()
+                pygame.display.flip()
+                tetris.missionClearEventFlag = 1
+                time.sleep(2)
             # Next mission Initialize
-            tetris.missionColor = random.randint(1, 6)
-            tetris.startPathX = blocklib.stageLevel[tetris.stageLevel][0]
+            tetris.minPath = 999
+            tetris.missionColor = 4 #random.randint(1, 6)
+            '''tetris.startPathX = blocklib.stageLevel[tetris.stageLevel][0]
             tetris.startPathY = blocklib.stageLevel[tetris.stageLevel][1]
             tetris.endPathX = blocklib.stageLevel[tetris.stageLevel][2]
-            tetris.endPathY = blocklib.stageLevel[tetris.stageLevel][3]
+            tetris.endPathY = blocklib.stageLevel[tetris.stageLevel][3]'''
             tetris.missionStartImg = tetris._image_load(tetris.metroImgs[tetris.missionColor - 1] + ".png")
             tetris.missionEndImg = tetris._image_load(tetris.metroImgs[(tetris.missionColor - 1) + 6] +".png")
-            tetris.missionClearEventFlag = 1
             tetris.Map.clear()
-            tetris.Map = [[0] * tetris.mapRangeX for row in range(tetris.mapRangeY)]
-            tetris.screen.blit(tetris.background, (0, 0))
             tetris.gameInit()
 
     # 최단거리 탐색(DFS)
@@ -200,7 +203,7 @@ class tetris(object) :
                 if cnt < tetris.minPath :
                     tetris.minPath = cnt
                     tetris.minPathLocation.clear()
-                    tetris.minPathLocation = list(tetris.tempPath)
+                    tetris.minPathLocation = list(tetris.tempPath) # list 복사
             tempMap = tetris.Map[y][x]
             tetris.Map[y][x] = 0
             checkMapped = [x < tetris.mapRangeX - 3, y < tetris.mapRangeY - 1, y > 0, x > 0]
@@ -259,10 +262,9 @@ class tetris(object) :
             for j, xMap  in enumerate(yMap) :
                 tempColor = 0
                 # 지하철 노선에 따른 색깔
-                if 0< xMap <= 6:
+                if 0 < xMap <= 6:
                     tempColor = tetris.colors[xMap]
-                if xMap >= 1 and j < 30:
-                    #pygame.draw.rect(screen, colors[random.randint(0,4)], pygame.Rect(tempX, tempY, 20, 20))
+                if 30 > xMap >= 1 :
                     pygame.draw.rect(tetris.screen, tempColor, pygame.Rect(tempX, tempY, 20, 20))
                 tempX += 20
 
@@ -279,12 +281,10 @@ class tetris(object) :
     def drawBackbround() :
         tempN = 0
         for i in range(0, 2) :
-            tempW = 280
-            if i == 1 :
-                tempW = 900
+            tempW = [280, 900]
             tempN = 0
             for j in range(0, tetris.mapRangeY) :
-                tetris.screen.blit(tetris.block, (tempW, tempN))
+                tetris.screen.blit(tetris.block, (tempW[i], tempN))
                 tempN += 20
         tempN = 280
         for i in range(0, tetris.mapRangeX - 2) :
@@ -358,7 +358,6 @@ class tetris(object) :
             yBlock = tetris.nowBlockShape[(tetris.changeBlockShape * 4) + i]
             # map에 블럭이 내려올때 바로 아래단에 블럭이 차있는지 확인 or 바닥에 닿았을 경우
             for j, tBlock in enumerate(yBlock) :
-                #print(str(tBlock) + " " + str(tetris.blockY + 60) + " " + str(((tetris.mapRangeY - 1) * 20) - 20))
                 if ((tBlock == 1 and tetris.Map[int(tetris.blockY / 20) + i + 1][int((tetris.blockX - 300) / 20) + j] >= 1)
                         or (tetris.blockY + 60 == ((tetris.mapRangeY - 1) * 20) - 20)) :
                     # 미션 실패(더 이상 내려올 곳이 없을때)
@@ -367,7 +366,7 @@ class tetris(object) :
                         tetris.showPlayTime()
                         tetris.drawText(598, 345, str(tetris.stageLevel + 1), 30)
                         pygame.display.flip()
-                        tetris.sendDataToServer = 1
+                        self.sendDataToServer = 1
                         tetris.stageLevel = 0
                         self.gameSequence = 0
                         time.sleep(2)
@@ -375,11 +374,10 @@ class tetris(object) :
                     tetris.blockX = 580
                     tetris.blockY = 0
                 # 블럭이 좌, 우로 이동 가능한지 체크
-                if (tBlock == 1 and tetris.Map[int(tetris.blockY / 20) + i][int((tetris.blockX - 300) / 20) + j - 1] >= 1) :
+                if tBlock == 1 and tetris.Map[int(tetris.blockY / 20) + i][int((tetris.blockX - 300) / 20) + j - 1] >= 1 :
                     tetris.checkMoveL = 0
-                if (tBlock == 1 and tetris.Map[int(tetris.blockY / 20) + i][int((tetris.blockX - 300) / 20) + j + 1] >= 1) :
+                if tBlock == 1 and tetris.Map[int(tetris.blockY / 20) + i][int((tetris.blockX - 300) / 20) + j + 1] >= 1 :
                     tetris.checkMoveR = 0
-
         # 블럭 아래로 한칸씩 내리기
         if tetris.blockY < ((tetris.mapRangeY - 1) * 20) - 80 :
             if tetris.fastDownFlag == 0 :
@@ -454,26 +452,30 @@ class tetris(object) :
             tetris.btnSoundflag = False
 
     # description 페이지 관련 메소드(사용자 정보 입력 등)
-    gameID = []
+    gameID = ['d','e','f','a','u','l','t']
     def inputInform(self) :
         tmpChar  = ''
         tetris.drawText(390, 635, ''.join(tetris.gameID), 27)
         for event in pygame.event.get():
+            # 키보드 눌렀을때
             if event.type == pygame.KEYDOWN:
                 inputKey = [K_a, K_b, K_c, K_d, K_e, K_f, K_g, K_h, K_i, K_j, K_k, K_l, K_m,
                             K_n, K_o, K_p, K_q, K_r, K_s, K_t, K_u, K_v, K_w, K_x, K_y, K_z]
-                for i, inputChar in enumerate(inputKey) :
-                    if event.key == inputChar and len(tetris.gameID) < 25 :
-                        tmpChar = ord('a') + i
-                        tetris.gameID.append(chr(tmpChar))
+                if len(tetris.gameID) < 25 :
+                    for i, inputChar in enumerate(inputKey) :
+                        if event.key == inputChar :
+                            tmpChar = ord('a') + i  # 아스키값
+                            tetris.gameID.append(chr(tmpChar))  # 아스키값을 char값으로 변환
+                    if event.key == K_SPACE :
+                        tetris.gameID.append(' ')
                 if event.key == K_BACKSPACE and len(tetris.gameID) > 0 :
                     tetris.gameID.pop()
-
+            # 마우스 클릭
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 if (1065 >= pos[0] >= 865) and (165 >= pos[1] >= 90) :
                     self.gameSequence = 0
-
+            # 게임 끝내기
             elif event.type == pygame.QUIT:
                 pygame.quit()
                 exit(0)
@@ -482,11 +484,11 @@ class tetris(object) :
     @staticmethod
     def sendGameData() :
         tName = ''.join(tetris.gameID)
-        tIntroduction = '접속시간 : '
         tgameScore = tetris.resultScore
         tgameTime = str(datetime.datetime.now())
-        obj={ "name" : tName, "introduction" : tIntroduction + tgameTime, "gamescore" : tgameScore, "gametime" : 0}
-        res = requests.post(tetris.url, data = obj)
+        tIntroduction = '게임시간 : ' + tgameTime + tetris.gameClearMessage
+        data = {"name" : tName, "introduction" : tIntroduction, "gamescore" : tgameScore, "gametime" : 0}
+        res = requests.post(tetris.url, data = data)
 
     @staticmethod
     def viewTimer() :
@@ -497,12 +499,20 @@ class tetris(object) :
     def stageChange(level) :
         for i in range(0, tetris.mapRangeY) :
             tetris.Map[i][30] = 88
-        if level == 5 :
+
+        for i in range(1, 18) :
+            tetris.Map[27][i] = 4
+        for i in range(27, 40) :
+            tetris.Map[i][14] = 4
+            tetris.Map[i][17] = 4
+            tetris.Map[39][16] = 4
+            tetris.Map[39][15] = 4
+        '''if level == 5 :
             for i in range(0, 27) :
                 tetris.Map[39][i] = 4
                 tetris.Map[38][i] = 3
                 tetris.Map[35][i] = 2
-                tetris.Map[34][i] =  1
+                tetris.Map[34][i] = 1
             for i in range(2,29) :
                 tetris.Map[37][i] = 6
                 tetris.Map[36][i] = 5
@@ -552,4 +562,4 @@ class tetris(object) :
                 tetris.Map[i][14] = 4
                 tetris.Map[i][17] = 4
             tetris.Map[39][16] = 4
-            tetris.Map[39][15] = 4
+            tetris.Map[39][15] = 4'''

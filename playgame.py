@@ -17,7 +17,7 @@ if __name__ == "__main__":
         # init viewgameSequence
         if game.gameSequence == 0 :
             # 서버로 데이터 전송(게임이 끝나서 메인화면으로 나올경우) -> 재도전 버튼누를경우도 추가해야함
-            if game.sendDataToServer == 1 :
+            if game.sendDataToServer :
                 game.sendDataToServer = 0
                 game.sendGameData()
                 game.resultScore = 0
@@ -47,7 +47,9 @@ if __name__ == "__main__":
                 game.blockTimer = game.blockTimer1
                 game.updateMap()
                 game.checkFillBlock()
-                if game.missionClearEventFlag == 0 :
+                game.gameClearEvent()
+
+                if not game.missionClearEventFlag :
                     # clean map
                     pygame.draw.rect(game.screen, game.BLACK, pygame.Rect(300, 0, 600, 800))
                     # draw background
@@ -62,6 +64,7 @@ if __name__ == "__main__":
                     game.drawPreviewBlock()
                 else :
                     game.missionClearEventFlag = 0
+
                 # update screen
                 pygame.display.flip()
             # key event
