@@ -14,7 +14,8 @@ import datetime
 pygame.mixer.init()
 class tetris(object) :
     # 게임 결과(data)를 보낼 Server IP(local Test 중)
-    url = 'http://127.0.0.1:8000/'
+    #url = 'http://127.0.0.1:8000/'
+    url = 'http://13.115.233.106/'
     # Load sounds
     btnSound = pygame.mixer.Sound("tetrisResource/audio/effect1.wav")
     # load images
@@ -366,8 +367,9 @@ class tetris(object) :
                         tetris.showPlayTime()
                         tetris.drawText(598, 345, str(tetris.stageLevel + 1), 30)
                         pygame.display.flip()
-                        self.sendDataToServer = 1
                         tetris.stageLevel = 0
+                        tetris.resultScore = 0
+                        self.sendDataToServer = 1
                         self.gameSequence = 0
                         time.sleep(2)
                     tetris.copyBlockToMap()
@@ -487,7 +489,8 @@ class tetris(object) :
         tgameScore = tetris.resultScore
         tgameTime = str(datetime.datetime.now())
         tIntroduction = '게임시간 : ' + tgameTime + tetris.gameClearMessage
-        data = {"name" : tName, "introduction" : tIntroduction, "gamescore" : tgameScore, "gametime" : 0}
+        data = {"secret_key" : '시크릿키', "name" : tName, "introduction" : tIntroduction,
+                "gamescore" : tgameScore, "gamelevel" : tetris.stageLevel ,"gametime" : 0}
         res = requests.post(tetris.url, data = data)
 
     @staticmethod
