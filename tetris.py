@@ -141,11 +141,10 @@ class tetris(object) :
             tetris.gameClearMessage = ' [* MVP *]'
             tetris.screen.blit(tetris.gameClearImg, (400, 250))
             pygame.display.flip()
-            self.sendDataToServer = 1
             tetris.missionClearEventFlag = 1
-            tetris.stageLevel = 0
+            self.sendDataToServer = 1
             self.gameSequence = 0
-            time.sleep(2)
+            time.sleep(1)
 
     # 게임 플레이 시간 현시
     def showPlayTime() :
@@ -182,10 +181,10 @@ class tetris(object) :
             # Next mission Initialize
             tetris.minPath = 999
             tetris.missionColor = 4 #random.randint(1, 6)
-            '''tetris.startPathX = blocklib.stageLevel[tetris.stageLevel][0]
+            tetris.startPathX = blocklib.stageLevel[tetris.stageLevel][0]
             tetris.startPathY = blocklib.stageLevel[tetris.stageLevel][1]
             tetris.endPathX = blocklib.stageLevel[tetris.stageLevel][2]
-            tetris.endPathY = blocklib.stageLevel[tetris.stageLevel][3]'''
+            tetris.endPathY = blocklib.stageLevel[tetris.stageLevel][3]
             tetris.missionStartImg = tetris._image_load(tetris.metroImgs[tetris.missionColor - 1] + ".png")
             tetris.missionEndImg = tetris._image_load(tetris.metroImgs[(tetris.missionColor - 1) + 6] +".png")
             tetris.Map.clear()
@@ -198,9 +197,6 @@ class tetris(object) :
         if tetris.Map[y][x] == tetris.missionColor :
             tetris.tempPath.append([y, x]) # 경로 추가
             if x == tetris.endPathX - 1 and y == tetris.endPathY - 1 :
-                #print("===================")
-                #for i in tetris.tempPath :
-                    #print(str(i[0]) + ', ' + str(i[1]))
                 if cnt < tetris.minPath :
                     tetris.minPath = cnt
                     tetris.minPathLocation.clear()
@@ -367,11 +363,10 @@ class tetris(object) :
                         tetris.showPlayTime()
                         tetris.drawText(598, 345, str(tetris.stageLevel + 1), 30)
                         pygame.display.flip()
-                        tetris.stageLevel = 0
-                        tetris.resultScore = 0
-                        self.sendDataToServer = 1
+                        if tetris.stageLevel > 0 :
+                            self.sendDataToServer = 1
                         self.gameSequence = 0
-                        time.sleep(2)
+                        time.sleep(1)
                     tetris.copyBlockToMap()
                     tetris.blockX = 580
                     tetris.blockY = 0
@@ -490,8 +485,10 @@ class tetris(object) :
         tgameTime = str(datetime.datetime.now())
         tIntroduction = '게임시간 : ' + tgameTime + tetris.gameClearMessage
         data = {"secret_key" : '시크릿키', "name" : tName, "introduction" : tIntroduction,
-                "gamescore" : tgameScore, "gamelevel" : tetris.stageLevel ,"gametime" : 0}
+                "gamescore" : tgameScore, "gamelevel" : tetris.stageLevel ,"gametime" : 0, "emailladdress" : 'default'}
         res = requests.post(tetris.url, data = data)
+        tetris.resultScore = 0
+        tetris.stageLevel = 0
 
     @staticmethod
     def viewTimer() :
@@ -502,15 +499,7 @@ class tetris(object) :
     def stageChange(level) :
         for i in range(0, tetris.mapRangeY) :
             tetris.Map[i][30] = 88
-
-        for i in range(1, 18) :
-            tetris.Map[27][i] = 4
-        for i in range(27, 40) :
-            tetris.Map[i][14] = 4
-            tetris.Map[i][17] = 4
-            tetris.Map[39][16] = 4
-            tetris.Map[39][15] = 4
-        '''if level == 5 :
+        if level == 0 :
             for i in range(0, 27) :
                 tetris.Map[39][i] = 4
                 tetris.Map[38][i] = 3
@@ -558,7 +547,7 @@ class tetris(object) :
                 else :
                     for j in range(0, 28) :
                         tetris.Map[i][j] = random.randint(1, 6)
-        elif level == 0 :
+        '''elif level == 0 :
             for i in range(1, 18) :
                 tetris.Map[27][i] = 4
             for i in range(27, 40) :
