@@ -8,9 +8,9 @@ import time
 
 if __name__ == "__main__":
     pygame.init()
-    pygame.mixer.music.load("tetrisResource/audio/bgm.mp3")
+    pygame.mixer.music.load("TetrisResource/audio/bgm.mp3")
     pygame.mixer.music.play(-1)
-    game = tetris.tetris()
+    game = tetris.Tetris()
     game.gameSequence = 0        # game play 진행 순서
 
     while 1 :
@@ -22,6 +22,7 @@ if __name__ == "__main__":
                 game.sendGameData()
                 game.stageLevel = 0
                 game.resultTime = 0
+
             game.screen.blit(game.initBackground, (0, 0))
             game.effectMenueBtn()
             pygame.display.flip()
@@ -60,12 +61,11 @@ if __name__ == "__main__":
                     # draw now block
                     game.drawBlock(0, game.nowBlockShape, game.blockColor, game.blockX, game.blockY)
                     # draw next block
-                    game.drawBlock(0, game.nextBlockShape, game.nextColor, 940, 0)
+                    game.drawBlock(2, game.nextBlockShape, game.nextColor, 940, 0)
                     # draw preview block
                     game.drawPreviewBlock()
                 else :
                     game.missionClearEventFlag = 0
-
                 # update screen
                 pygame.display.flip()
             # key event
