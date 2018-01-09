@@ -1,4 +1,5 @@
 import pygame
+from sys import exit
 from pygame.locals import *
 import math
 import random
@@ -35,7 +36,8 @@ if __name__ == "__main__":
                 game.gameSequence = 1
             elif pageButton == 3 :
                 pygame.quit()
-                exit(0)
+                exit()
+                #exit(0)
         # View game description
         elif game.gameSequence == 1 :
             pageButton = 0

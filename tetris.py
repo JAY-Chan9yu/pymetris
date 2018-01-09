@@ -1,5 +1,5 @@
-# 1 - Import library
 import pygame
+from sys import exit
 from pygame.locals import *
 import math
 from math import floor
@@ -247,7 +247,6 @@ class Tetris(object) :
                         Tetris.screen.blit(Tetris.previewBlockImg, (tempX, tempY))
                     else :
                         pygame.draw.rect(Tetris.screen, color, pygame.Rect(tempX, tempY, 20, 20))
-
                 tempX += 20
 
     # map을 화면에서 볼수 있도록 그려주는 함수i
@@ -345,7 +344,7 @@ class Tetris(object) :
             # if it is quit the game
             if event.type == pygame.QUIT:
                 pygame.quit()
-                exit(0)
+                exit()
         Tetris.movePlay()
 
     # map의 내용을 update 해주는 함수
@@ -411,7 +410,7 @@ class Tetris(object) :
                             result = i + 1
             elif event.type == pygame.QUIT:
                 pygame.quit()
-                exit(0)
+                exit()
         return result
 
     # 버튼 선택 효과 보여주는 함수 들
@@ -475,7 +474,7 @@ class Tetris(object) :
             # 게임 끝내기
             elif event.type == pygame.QUIT:
                 pygame.quit()
-                exit(0)
+                exit()
 
     #게임 데이터 서버로 전송
     @staticmethod
