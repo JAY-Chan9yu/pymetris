@@ -239,10 +239,10 @@ class Tetris(object) :
             tBlock = shape
             yBlock = tBlock[changeB[choiceBlkOrImg] + i]
             tempX = x
-            tempY = y + (20 * i)
+            tempY = y + (20 * i) # block 크기 20 X 20(픽셀)
             for j, xBlock  in enumerate(yBlock) :
                 if xBlock >= 1 :
-                    # 블럭을 출력할 것인지 이미지를 출력할 것인지
+                    # 블럭을 출력할 것인지 이미지를 출력할 것인지(1이면 미리보기용 이미지)
                     if choiceBlkOrImg == 1:
                         Tetris.screen.blit(Tetris.previewBlockImg, (tempX, tempY))
                     else :
