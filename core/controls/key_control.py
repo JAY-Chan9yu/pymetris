@@ -66,31 +66,27 @@ class KeyControlService:
         print(f'{self.move_left_cnt}, {self.move_right_cnt}')
         print(f'--------------------------------------------')
 
-        if self.current_key_event[ControlKey.LEFT] and current_block_x > 300 and self.can_move_left:
-            # self.move_left_cnt += 1
-            # if self.move_left_cnt == 10000:
-            #     current_block_x -= 20
-            #     self.move_left_cnt = 0
-            current_block_x -= 20
+        if self.current_key_event[ControlKey.LEFT] and self.can_move_left:
+            self.move_left_cnt += 1
+            if self.move_left_cnt == 5:
+                current_block_x -= 20
+                self.move_left_cnt = 0
 
-        elif self.current_key_event[ControlKey.RIGHT] and current_block_x < 860 and self.can_move_right:
-            # self.move_right_cnt += 1
-            # if self.move_right_cnt == 10000:
-            #     current_block_x += 20
-            #     self.move_right_cnt = 0
-            current_block_x += 20
+        elif self.current_key_event[ControlKey.RIGHT] and self.can_move_right:
+            self.move_right_cnt += 1
+            if self.move_right_cnt == 5:
+                current_block_x += 20
+                self.move_right_cnt = 0
 
         # 이전 입력과 현재입력이 다를때 (중복실행 방지)
         elif self.previous_key_event[ControlKey.UP] != self.current_key_event[ControlKey.UP]:
             self.previous_key_event = self.current_key_event
-            # Tetris.changeBlockShape = (Tetris.changeBlockShape + 1) % 4
+            block_control_service.change_block_direction()
 
         # 이전 입력과 현재입력이 다를때 (중복실행 방지)
         elif self.previous_key_event[ControlKey.DOWN] != self.current_key_event[ControlKey.DOWN]:
-            # 게임 스피드 증가시키는 로직
             self.previous_key_event = self.current_key_event
-            # Tetris.blockTimer1 = 1
-            # Tetris.fastDownFlag = 1
+            block_control_service.up_speed()
 
         elif self.current_key_event[4]:
             ...
@@ -161,6 +157,11 @@ class KeyControlService:
         is_left: bool = True
     ) -> bool:
         direction = -1 if is_left else 1
-        return _map[int(current_block_y / self.BLOCK_COMMON_OFFSET) + block_y_line][
-                   int((current_block_x - self.BLOCK_X_CENTER_OFFSET)
-                       / self.BLOCK_COMMON_OFFSET) + block_x_line + direction] >= 1
+        y = int(current_block_y / self.BLOCK_COMMON_OFFSET) + block_y_line
+        x = int((current_block_x - self.BLOCK_X_CENTER_OFFSET) / self.BLOCK_COMMON_OFFSET) + block_x_line + direction
+
+        # 화면 밖으로 나가는 경우 블럭이 있다고 가정
+        if x > 33 or x < 0:
+            return True
+
+        return _map[y][x] >= 1
