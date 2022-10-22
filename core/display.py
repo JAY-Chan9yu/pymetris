@@ -1,5 +1,4 @@
 import random
-from enum import Enum
 from typing import Callable, List, Optional
 
 import pygame
@@ -7,6 +6,7 @@ from pydantic import BaseModel
 from pygame.surface import Surface
 
 from core.colors import COLORS, ColorType
+from core.controls.block_control import BlockType, BlockDirection
 from utils.images import IMAGE_LOADER
 from utils.uow import AbstractUnitOfWorks
 
@@ -19,18 +19,6 @@ class BackgroundBatch(BaseModel):
 class DisplayCoordinate(BaseModel):
     x: int
     y: int
-
-
-class BlockType(int, Enum):
-    IMAGE = 0
-    COLOR = 1
-
-
-class BlockDirection(int, Enum):
-    UP = 0
-    RIGHT = 1
-    DOWN = 2
-    LEFT = 3
 
 
 class DisplayUnitOfWorks(AbstractUnitOfWorks):
@@ -93,6 +81,8 @@ class DisplayService:
         pygame.draw.rect(self.screen, ColorType.BLACK.value, pygame.Rect(300, 0, 600, 800))
 
     def draw_map(self, _map: list):
+        self.draw_background()
+
         for i, map_y in enumerate(_map):
             # todo: 300, 20 상수로 정의하기 20은 y offset, 300은 배경 x축 중간 좌표
             temp_x = 300

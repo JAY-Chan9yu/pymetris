@@ -1,9 +1,21 @@
 import random
+from enum import Enum
 from typing import Optional
 
 from core.colors import COLORS
-from core.display import BlockDirection
 from utils.blocks import get_next_block
+
+
+class BlockType(int, Enum):
+    IMAGE = 0
+    COLOR = 1
+
+
+class BlockDirection(int, Enum):
+    UP = 0
+    RIGHT = 1
+    DOWN = 2
+    LEFT = 3
 
 
 BLOCK_LIST = [BlockDirection.UP, BlockDirection.RIGHT, BlockDirection.DOWN, BlockDirection.LEFT]
