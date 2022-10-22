@@ -1,12 +1,13 @@
 import random
 from typing import Optional
 
-from core.colors import COLORS, ColorType
+from core.colors import COLORS
 from core.display import BlockDirection
 from utils.blocks import get_next_block
 
 
-BLOCK_LIST = [BlockDirection.UP, BlockDirection.DOWN, BlockDirection.LEFT, BlockDirection.RIGHT]
+BLOCK_LIST = [BlockDirection.UP, BlockDirection.RIGHT, BlockDirection.DOWN, BlockDirection.LEFT]
+DEFAULT_BLOCK_SPEED = 10
 
 
 class BlockControlService:
@@ -17,7 +18,7 @@ class BlockControlService:
 
     def __init__(
         self,
-        block_drop_speed: int = 5,
+        block_drop_speed: int = DEFAULT_BLOCK_SPEED,
         current_block_x: Optional[int] = None,
         current_block_y: Optional[int] = None
     ):
@@ -28,7 +29,7 @@ class BlockControlService:
         self.next_block_color = COLORS[random.randint(1, 6)]
         self.next_block_shape = get_next_block(random.randint(0, 6))
         self.block_drop_speed = block_drop_speed  # controls the speed at which blocks fall
-        self.block_direction = random.randint(0, 3)
+        self.block_direction = BLOCK_LIST[random.randint(0, 3)]
 
     def update_next_block(self, _map: list, block_direction: BlockDirection):
         self.copy_block_to_map(_map, block_direction)
@@ -38,6 +39,7 @@ class BlockControlService:
         self.current_block_shape = self.next_block_shape
         self.next_block_color = COLORS[random.randint(1, 6)]
         self.next_block_shape = get_next_block(random.randint(0, 6))
+        self.block_drop_speed = DEFAULT_BLOCK_SPEED
 
     def drop_block(self, map_range_y: int, is_fast_drop=False):
         """
@@ -79,3 +81,9 @@ class BlockControlService:
 
         # todo: initialize map
         # Tetris.mapInit()
+
+    def change_block_direction(self):
+        self.block_direction = BLOCK_LIST[(self.block_direction + 1) % 4]
+
+    def up_speed(self):
+        self.block_drop_speed = 0
