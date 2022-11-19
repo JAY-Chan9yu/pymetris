@@ -2,7 +2,8 @@ from enum import Enum
 
 import pygame
 
-from core.controls.block_control import BlockControlService
+from core.controls.block_control import BlockControlService, BLOCK_COMMON_OFFSET, BLOCK_X_CENTER_OFFSET, BlockData
+from core.exceptions import EndOfGameException
 
 
 class ControlKey(int, Enum):
@@ -14,8 +15,6 @@ class ControlKey(int, Enum):
 
 
 class KeyControlService:
-    BLOCK_COMMON_OFFSET = 20
-    BLOCK_X_CENTER_OFFSET = 300
 
     def __init__(self):
         self.current_key_event = [False, False, False, False, False]  # 현재 키 입력
@@ -63,19 +62,18 @@ class KeyControlService:
         print(f'--------------------------------------------')
         print(f'current_block_x= {current_block_x}, current_block_y = {current_block_y}')
         print(f'key event : {self.current_key_event}')
-        print(f'{self.move_left_cnt}, {self.move_right_cnt}')
         print(f'--------------------------------------------')
 
         if self.current_key_event[ControlKey.LEFT] and self.can_move_left:
             self.move_left_cnt += 1
             if self.move_left_cnt == 5:
-                current_block_x -= 20
+                current_block_x -= BLOCK_COMMON_OFFSET
                 self.move_left_cnt = 0
 
         elif self.current_key_event[ControlKey.RIGHT] and self.can_move_right:
             self.move_right_cnt += 1
             if self.move_right_cnt == 5:
-                current_block_x += 20
+                current_block_x += BLOCK_COMMON_OFFSET
                 self.move_right_cnt = 0
 
         # 이전 입력과 현재입력이 다를때 (중복실행 방지)
@@ -96,72 +94,82 @@ class KeyControlService:
 
     def is_block_can_drop(
         self,
-        current_block_shape: list,
-        block_direction: int,
+        block_data: BlockData,
         map_range_y: int,
-        current_block_y: int,
-        current_block_x: int,
         _map: list
     ) -> bool:
+        # 미션 실패(더 이상 내려올 곳이 없을때)
         for block_y_line in range(3, 0, -1):
-            for block_x_line, tiny_block in enumerate(current_block_shape[(block_direction * 4) + block_y_line]):
-                # map에 블럭이 내려올때 바로 아래단에 블럭이 차있는지 확인 or 바닥에 닿았을 경우
-                if ((tiny_block == 1 and (_map[int(current_block_y / 20) + block_y_line + 1][int((current_block_x - 300) / 20) + block_x_line] >= 1))
-                        or (current_block_y + 60 == ((map_range_y - 1) * 20) - 20)):
-                    # 미션 실패(더 이상 내려올 곳이 없을때)
-                    if current_block_y == 0:
-                        return False
+            for block_x_line, tiny_block in enumerate(
+                block_data.current_block_shape[(block_data.block_direction * 4) + block_y_line]
+            ):
+                if tiny_block == 1 and self.check_underline(block_y_line, block_x_line, block_data, _map):
+                    if block_data.current_block_y == 0:  # 게임 종료
+                        raise EndOfGameException
 
+                    return False
+                # 바닥에 닿았을 경우
+                if block_data.current_block_y + 60 == (map_range_y * BLOCK_COMMON_OFFSET) - BLOCK_COMMON_OFFSET:
                     return False
 
         return True
 
     def check_can_move_left_and_right(
         self,
-        current_block_shape: list,
-        block_direction: int,
-        current_block_y: int,
-        current_block_x: int,
+        block_data: BlockData,
         _map: list
     ) -> bool:
         check_can_move_left = True
         check_can_move_right = True
 
         for block_y_line in range(3, 0, -1):
-            for block_x_line, tiny_block in enumerate(current_block_shape[(block_direction * 4) + block_y_line]):
+            for block_x_line, tiny_block in enumerate(
+                block_data.current_block_shape[(block_data.block_direction * 4) + block_y_line]
+            ):
                 if check_can_move_left == 1:
-                    if tiny_block == 1 and \
-                            (self._is_exists_block(block_y_line, block_x_line, current_block_y, current_block_x, _map, True)):
+                    if tiny_block == 1 and self._is_exists_block(block_y_line, block_x_line, block_data, _map, True):
                         self.can_move_left = False
                         check_can_move_left = False
                     else:
                         self.can_move_left = True
 
                 if check_can_move_right == 1:
-                    if tiny_block == 1 and \
-                            (self._is_exists_block(block_y_line, block_x_line, current_block_y, current_block_x, _map, False)):
+                    if tiny_block == 1 and self._is_exists_block(block_y_line, block_x_line, block_data, _map, False):
                         self.can_move_right = False
                         check_can_move_right = False
                     else:
                         self.can_move_right = True
-
         return True
 
-    def _is_exists_block(
-        self,
+    @staticmethod
+    def check_underline(
         block_y_line: int,
         block_x_line: int,
-        current_block_y: int,
-        current_block_x: int,
+        block_data: BlockData,
+        _map: list
+    ) -> bool:
+        """
+         map에 블럭이 내려올때 바로 아래라인에 블럭이 차있는지 확인
+        """
+        y = int(block_data.current_block_y / BLOCK_COMMON_OFFSET) + block_y_line + 1
+        x = int((block_data.current_block_x - BLOCK_X_CENTER_OFFSET) / BLOCK_COMMON_OFFSET) + block_x_line
+        return _map[y][x] >= 1
+
+    @staticmethod
+    def _is_exists_block(
+        block_y_line: int,
+        block_x_line: int,
+        block_data: BlockData,
         _map: list,
         is_left: bool = True
     ) -> bool:
         direction = -1 if is_left else 1
-        y = int(current_block_y / self.BLOCK_COMMON_OFFSET) + block_y_line
-        x = int((current_block_x - self.BLOCK_X_CENTER_OFFSET) / self.BLOCK_COMMON_OFFSET) + block_x_line + direction
+        y = int(block_data.current_block_y / BLOCK_COMMON_OFFSET) + block_y_line
+        x = int((block_data.current_block_x - BLOCK_X_CENTER_OFFSET) / BLOCK_COMMON_OFFSET) + block_x_line + direction
 
         # 화면 밖으로 나가는 경우 블럭이 있다고 가정
-        if x > 33 or x < 0:
+        if x >= 30 or x < 0:
             return True
 
         return _map[y][x] >= 1
+

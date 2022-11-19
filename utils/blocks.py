@@ -154,4 +154,4 @@ def get_next_block(block_num: int) -> List:
         5: BLOCK_J,
         6: BLOCK_O
     }
-    return block_dict.get(block_num, 0)
+    return block_dict.get(block_num, BLOCK_L)
