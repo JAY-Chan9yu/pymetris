@@ -17,13 +17,6 @@ class GameStatus(int, Enum):
     EXIT = 4
 
 
-# class GameMenu(int, Enum):
-#     NONE = 0
-#     START = 1
-#     DESCRIPTION = 2
-#     EXIT = 3
-
-
 class MetrisGameService:
     """
     Handles overall game settings
@@ -35,9 +28,9 @@ class MetrisGameService:
     SCREEN_HEIGHT = 900  # 480
 
     display_unit_of_works = DisplayUnitOfWorks
-    metris_map = []
 
-    status = GameStatus.RUN #GameStatus.PENDING
+    metris_map = []
+    status = GameStatus.PENDING
 
     def __init__(self):
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
@@ -55,7 +48,7 @@ class MetrisGameService:
         self.draw_map()
 
     def play_game(self):
-        self.reset()
+        self.draw_menu()
 
         while True:
             try:

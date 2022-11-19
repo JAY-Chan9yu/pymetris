@@ -1,3 +1,4 @@
+import itertools
 import random
 from dataclasses import dataclass
 from enum import Enum
@@ -109,29 +110,29 @@ class BlockControlService:
         _map: list,
         block_direction: int,
     ):
-        for i in range(0, 4):
-            for j in range(0, 4):
-                # 지하철 노선에 따른 색깔
-                temp_color = 0
-                for color_idx, color in enumerate(COLORS):
-                    if self.current_block_color == color:
-                        temp_color = color_idx
-                if self.current_block_shape[(block_direction * 4) + i][j] >= 1:
-                    _map[int((self.current_block_y / BLOCK_COMMON_OFFSET) + i)][
-                        int(((self.current_block_x - BLOCK_X_CENTER_OFFSET) / BLOCK_COMMON_OFFSET) + j)
-                    ] = temp_color
+        for i, j in itertools.product(range(0, 4), range(0, 4)):
+            # 지하철 노선에 따른 색깔
+            temp_color = 0
+            for color_idx, color in enumerate(COLORS):
+                if self.current_block_color == color:
+                    temp_color = color_idx
+            if self.current_block_shape[(block_direction * 4) + i][j] >= 1:
+                x = int(((self.current_block_x - BLOCK_X_CENTER_OFFSET) / BLOCK_COMMON_OFFSET) + j)
+                y = int((self.current_block_y / BLOCK_COMMON_OFFSET) + i)
+                _map[y][x] = temp_color
 
     def change_block_direction(self):
+        """블럭 방향 전환"""
         self.block_direction = BLOCK_LIST[(self.block_direction + 1) % 4]
 
     def up_speed(self):
+        """블럭 내려오는 속도 증가"""
         self.block_drop_speed = 0
 
     @staticmethod
     def remove_full_line(_map: list, map_range_x: int, map_range_y: int):
         """꽉찬 라인을 제거 하고 한칸 내린다"""
         for i in range(map_range_y - 1, 0, -1):
-
             if not all(_map[i]):
                 continue
             for t in range(i, 1, -1):

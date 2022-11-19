@@ -52,10 +52,10 @@ class KeyControlService:
 
         self.move_block_by_keyboard_event(block_control_service)
 
-    def move_block_by_keyboard_event(
-        self,
-        block_control_service: BlockControlService,
-    ):
+    def move_block_by_keyboard_event(self, block_control_service: BlockControlService):
+        """
+        키보드 입력에 따라 블럭을 움직이는 함수
+        """
         current_block_x = block_control_service.current_block_x
         current_block_y = block_control_service.current_block_y
 
@@ -98,6 +98,9 @@ class KeyControlService:
         map_range_y: int,
         _map: list
     ) -> bool:
+        """
+        블럭이 계속 내려올 수 있는지 판단하는 함수
+        """
         # 미션 실패(더 이상 내려올 곳이 없을때)
         for block_y_line in range(3, 0, -1):
             for block_x_line, tiny_block in enumerate(
@@ -119,6 +122,9 @@ class KeyControlService:
         block_data: BlockData,
         _map: list
     ) -> bool:
+        """
+        블럭이 좌, 우로 이동할 수 있는지 체크하는 함수
+        """
         check_can_move_left = True
         check_can_move_right = True
 
@@ -163,13 +169,13 @@ class KeyControlService:
         _map: list,
         is_left: bool = True
     ) -> bool:
+        """
+        해당 좌표에 블럭이 존재하는지 체크하는 함수
+        """
         direction = -1 if is_left else 1
         y = int(block_data.current_block_y / BLOCK_COMMON_OFFSET) + block_y_line
         x = int((block_data.current_block_x - BLOCK_X_CENTER_OFFSET) / BLOCK_COMMON_OFFSET) + block_x_line + direction
-
         # 화면 밖으로 나가는 경우 블럭이 있다고 가정
         if x >= 30 or x < 0:
             return True
-
         return _map[y][x] >= 1
-

@@ -12,14 +12,16 @@ import time
 import datetime
 
 pygame.mixer.init()
+
+
 class Tetris(object) :
     # 게임 결과(data)를 보낼 Server IP(local Test 중)
     #url = 'http://127.0.0.1:8000/'
     url = 'http://13.115.233.106/'
     # Load sounds
-    btnSound = pygame.mixer.Sound("TetrisResource/audio/effect1.wav")
+    btnSound = pygame.mixer.Sound("resource/audio/effect1.wav")
     # load images
-    _image_load = lambda x: pygame.image.load("TetrisResource/image/%s"%x)
+    _image_load = lambda x: pygame.image.load("resource/images/%s"%x)
     # 블럭 관련 이미지
     block, line, missionStartImg, missionEndImg, missionClearImg, missionFailImg, previewBlockImg, gameClearImg = map(_image_load, [
         "block.jpg", "line.png", "Metro2_start.png", "Metro2_end.png", "missionClearImg.png","missionFailImg.png","previewBlock.png", "gameClearImg.png"])
@@ -302,9 +304,6 @@ class Tetris(object) :
         Tetris.insertImgPosition(Tetris.startPathX, Tetris.startPathY, Tetris.missionStartImg)
         Tetris.insertImgPosition((Tetris.endPathX + tempVal), (Tetris.endPathY - tempVal), Tetris.missionEndImg)
 
-    moveLeftCnt = 0
-    moveRightCnt = 0
-    oldval = [False, False, False, False, False] # 이전 키 입력
     # key값 에 따른 움직임 함수
     def movePlay() :
         if Tetris.keys[2] and Tetris.blockX > 300 and Tetris.checkMoveL:
@@ -334,7 +333,7 @@ class Tetris(object) :
         for event in pygame.event.get():
             # key가 눌렸을때
             if event.type == pygame.KEYDOWN:
-                Tetris.keys= [event.key == K_UP and Tetris.blockX < 840, event.key == K_DOWN,
+                Tetris.keys = [event.key == K_UP and Tetris.blockX < 840, event.key == K_DOWN,
                               event.key == K_LEFT, event.key == K_RIGHT, event.key == K_SPACE]
                 pygame.mixer.Sound.play(Tetris.btnSound)
             # key가 떨어졌을때
@@ -503,8 +502,9 @@ class Tetris(object) :
 
     # 스테이지 별로 맵 바꿔주는 함수(리팩토링 예정)
     def stageChange(level) :
-        for i in range(0, Tetris.mapRangeY) :
+        for i in range(0, Tetris.mapRangeY):
             Tetris.Map[i][30] = 88
+
         if level == 0 :
             for i in range(0, 28) :
                 Tetris.Map[39][i] = 4
