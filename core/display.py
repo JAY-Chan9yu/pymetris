@@ -7,7 +7,6 @@ from pygame.surface import Surface
 
 from utils.colors import COLORS, ColorType
 from core.controls.block_control import BlockType, BlockDirection, BLOCK_X_CENTER_OFFSET, BLOCK_COMMON_OFFSET, BlockData
-from core.sound import SoundService
 from utils.images import IMAGE_LOADER
 from utils.uow import AbstractUnitOfWorks
 
@@ -51,7 +50,6 @@ class DisplayUnitOfWorks(AbstractUnitOfWorks):
 
 
 class DisplayService:
-    sound_service = SoundService
 
     metro_img_names = [
         "Metro1_start", "Metro2_start", "Metro3_start", "Metro4_start", "Metro5_start", "Metro6_start",
@@ -172,7 +170,7 @@ class DisplayService:
                 for idx, tiny_block in enumerate(current_block_shape_line):
                     under_line = y + block_shape_x_line + 1
                     x = int((block_data.current_block_x - BLOCK_X_CENTER_OFFSET) / BLOCK_COMMON_OFFSET) + idx
-                    if x >= 30:
+                    if x >= self.map_range_x:
                         continue
 
                     check_under_line_block = _map[under_line][x]

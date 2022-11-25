@@ -4,6 +4,7 @@ import pygame
 
 from core.controls.block_control import BlockControlService, BLOCK_COMMON_OFFSET, BLOCK_X_CENTER_OFFSET, BlockData
 from core.exceptions import EndOfGameException
+from core.sound import SoundService
 
 
 class ControlKey(int, Enum):
@@ -15,6 +16,7 @@ class ControlKey(int, Enum):
 
 
 class KeyControlService:
+    sound_service = SoundService
 
     def __init__(self):
         self.current_key_event = [False, False, False, False, False]  # 현재 키 입력
@@ -30,6 +32,7 @@ class KeyControlService:
     ):
         # loop through the events
         for event in pygame.event.get():
+            # 키가 눌렸을때
             if event.type == pygame.KEYDOWN:
                 self.current_key_event = [
                     event.key == pygame.K_UP and block_control_service.current_block_x < 840,
@@ -38,7 +41,7 @@ class KeyControlService:
                     event.key == pygame.K_RIGHT,
                     event.key == pygame.K_SPACE
                 ]
-                # pygame.mixer.Sound.play(Tetris.btnSound)
+                self.sound_service.play_clik_sound()
 
             # key가 떨어졌을때
             if event.type == pygame.KEYUP:

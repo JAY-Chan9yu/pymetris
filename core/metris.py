@@ -9,6 +9,7 @@ from core.controls.block_control import BlockControlService
 from core.controls.key_control import KeyControlService
 from core.display import DisplayService, DisplayUnitOfWorks, DisplayBatch
 from core.exceptions import EndOfGameException
+from core.sound import SoundService
 
 
 class GameStatus(int, Enum):
@@ -31,6 +32,8 @@ class MetrisGameService:
     """
     Handles overall game settings
     """
+    sound_service = SoundService
+
     MAP_RANGE_X = 30  # 33
     MAP_RANGE_Y = 40
     SCREEN_WIDTH = 1200  # 640
@@ -50,7 +53,6 @@ class MetrisGameService:
         self.stage_level = 1
 
     def initialize_game(self):
-        pygame.init()
         self.metris_map = []
         self.draw_map()
 
@@ -67,6 +69,8 @@ class MetrisGameService:
         self.draw_map()
 
     def play_game(self):
+        pygame.init()
+        self.sound_service.play_bgm()
         self.draw_menu()
 
         while True:
