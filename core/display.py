@@ -5,7 +5,7 @@ import pygame
 from pydantic import BaseModel
 from pygame.surface import Surface
 
-from core.colors import COLORS, ColorType
+from utils.colors import COLORS, ColorType
 from core.controls.block_control import BlockType, BlockDirection, BLOCK_X_CENTER_OFFSET, BLOCK_COMMON_OFFSET, BlockData
 from core.sound import SoundService
 from utils.images import IMAGE_LOADER

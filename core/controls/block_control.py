@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
-from core.colors import COLORS, ColorType
+from utils.colors import COLORS, ColorType
 from utils.blocks import get_next_block
 
 
