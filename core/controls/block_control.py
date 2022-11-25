@@ -30,6 +30,7 @@ BLOCK_X_CENTER_OFFSET = 300
 class BlockData:
     current_block_x: int
     current_block_y: int
+    current_mission_block_color_num: int
     current_block_color: ColorType
     current_block_shape: list
     next_block_color: ColorType
@@ -52,6 +53,7 @@ class BlockControlService:
     ):
         self.current_block_x = current_block_x if current_block_x else 580
         self.current_block_y = current_block_y if current_block_x else 30
+        self.current_mission_block_color_num = random.randint(1, 6)
         self.current_block_color = COLORS[random.randint(1, 6)]
         self.current_block_shape = get_next_block(random.randint(0, 6))
         self.next_block_color = COLORS[random.randint(1, 6)]
@@ -65,6 +67,7 @@ class BlockControlService:
         return BlockData(
             current_block_x=self.current_block_x,
             current_block_y=self.current_block_y,
+            current_mission_block_color_num=self.current_mission_block_color_num,
             current_block_color=self.current_block_color,
             current_block_shape=self.current_block_shape,
             next_block_color=self.next_block_color,
@@ -79,7 +82,8 @@ class BlockControlService:
         self.current_block_y = 0
         self.current_block_color = self.next_block_color
         self.current_block_shape = self.next_block_shape
-        self.next_block_color = COLORS[random.randint(1, 6)]
+        self.current_block_color_number = random.randint(1, 6)
+        self.next_block_color = COLORS[self.current_block_color_number]
         self.next_block_shape = get_next_block(random.randint(0, 6))
         self.block_drop_speed = DEFAULT_BLOCK_SPEED
         self.block_direction = BlockDirection.UP

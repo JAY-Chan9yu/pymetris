@@ -1,20 +1,30 @@
+import random
 import time
+from dataclasses import dataclass
 from enum import Enum
 
 import pygame
 
 from core.controls.block_control import BlockControlService
 from core.controls.key_control import KeyControlService
-from core.display import DisplayService, DisplayUnitOfWorks, BackgroundBatch
+from core.display import DisplayService, DisplayUnitOfWorks, DisplayBatch
 from core.exceptions import EndOfGameException
 
 
 class GameStatus(int, Enum):
     NONE = 0
     RUN = 1
-    PENDING = 2
+    READY = 2
     DESCRIPTION = 3
     EXIT = 4
+
+
+@dataclass
+class MissionCoordinate:
+    start_x: int
+    start_y: int
+    end_x: int
+    end_y: int
 
 
 class MetrisGameService:
@@ -23,25 +33,34 @@ class MetrisGameService:
     """
     MAP_RANGE_X = 30  # 33
     MAP_RANGE_Y = 40
-
     SCREEN_WIDTH = 1200  # 640
     SCREEN_HEIGHT = 900  # 480
-
-    display_unit_of_works = DisplayUnitOfWorks
-
     metris_map = []
-    status = GameStatus.PENDING
+    status = GameStatus.READY
 
     def __init__(self):
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
-        self.display_service = DisplayService(screen=self.screen)
+        self.display_service = DisplayService(self.screen, self.MAP_RANGE_X, self.MAP_RANGE_Y)
         self.block_control_service = BlockControlService()
         self.key_control_service = KeyControlService()
+        self.display_unit_of_works = DisplayUnitOfWorks
+        self.display_service.change_mission_img(self.block_control_service.block_data.current_mission_block_color_num)
+        self.current_mission_coordinate = None
+        self.reset_mission_coordinate()
+        self.stage_level = 1
 
     def initialize_game(self):
         pygame.init()
         self.metris_map = []
         self.draw_map()
+
+    def reset_mission_coordinate(self):
+        self.current_mission_coordinate = MissionCoordinate(
+            start_x=random.choice([0, 30]),
+            start_y=random.randint(10, 40),
+            end_x=random.randint(0, 30),
+            end_y=40,
+        )
 
     def reset(self):
         self.initialize_game()
@@ -56,7 +75,8 @@ class MetrisGameService:
                     self.process_block_key_event()
                     self.draw_basic_display()
 
-                elif self.status == GameStatus.PENDING:
+                elif self.status == GameStatus.READY:
+                    self.draw_menu()
                     self.process_menu_click_event()
 
                 elif self.status == GameStatus.DESCRIPTION:
@@ -84,20 +104,13 @@ class MetrisGameService:
         if not is_block_can_drop:
             self.block_control_service.update_next_block(self.metris_map, self.block_control_service.block_direction)
 
-    def draw_menu(self):
-        uow = self.display_unit_of_works()
-        uow.batches.append(BackgroundBatch(func=self.display_service.draw_init_background))
-        with uow:
-            uow.allocate()
-
     def process_fail(self):
         uow = self.display_unit_of_works()
-        uow.batches.append(BackgroundBatch(func=self.display_service.draw_mission_fail))
+        uow.batches.append(DisplayBatch(func=self.display_service.draw_mission_fail))
         with uow:
             uow.allocate()
-        self.status = GameStatus.PENDING
+        self.status = GameStatus.READY
         time.sleep(1)
-        self.draw_menu()
 
     def process_menu_click_event(self):
         for event in pygame.event.get():
@@ -147,29 +160,35 @@ class MetrisGameService:
                 pos = pygame.mouse.get_pos()
                 if 1065 >= pos[0] >= 865 and 165 >= pos[1] >= 90:
                     self.draw_menu()
-                    self.status = GameStatus.PENDING
+                    self.status = GameStatus.READY
 
             elif event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
 
+    def draw_menu(self):
+        uow = self.display_unit_of_works()
+        uow.batches.append(DisplayBatch(func=self.display_service.draw_menu_background))
+        with uow:
+            uow.allocate()
+
     def draw_map(self):
         uow = self.display_unit_of_works()
-        uow.batches.append(BackgroundBatch(
+        uow.batches.append(DisplayBatch(
             func=self.display_service.init_map,
             parms={'_map': self.metris_map, 'map_range_y': self.MAP_RANGE_Y, 'map_range_x': self.MAP_RANGE_X})
         )
-        uow.batches.append(BackgroundBatch(
-            func=self.display_service.change_stage, parms={'stage_level': 0, '_map': self.metris_map})
+        uow.batches.append(DisplayBatch(
+            func=self.display_service.change_stage, parms={'stage_level': self.stage_level, '_map': self.metris_map})
         )
-        uow.batches.append(BackgroundBatch(func=self.display_service.draw_map, parms={'_map': self.metris_map}))
+        uow.batches.append(DisplayBatch(func=self.display_service.draw_map, parms={'_map': self.metris_map}))
 
         with uow:
             uow.allocate()
 
     def draw_description_menu(self):
         uow = self.display_unit_of_works()
-        uow.batches.append(BackgroundBatch(func=self.display_service.draw_description_menu))
+        uow.batches.append(DisplayBatch(func=self.display_service.draw_description_menu))
         with uow:
             uow.allocate()
 
@@ -180,19 +199,29 @@ class MetrisGameService:
         # 화면 갱신
         uow = self.display_unit_of_works()
         # 백그라운드 그리기
-        uow.batches.append(BackgroundBatch(
+        uow.batches.append(DisplayBatch(
             func=self.display_service.draw_map,
             parms={'_map': self.metris_map})
         )
         # 현재 블럭 그리기
-        uow.batches.append(BackgroundBatch(
+        uow.batches.append(DisplayBatch(
             func=self.display_service.draw_current_block,
             parms={'block_data': self.block_control_service.block_data})
         )
-        # 다음에 나올 블럭 미리보기
-        uow.batches.append(BackgroundBatch(
+        # 다음에 나올 블럭 그리기 (미리보기)
+        uow.batches.append(DisplayBatch(
             func=self.display_service.draw_next_block,
             parms={'block_data': self.block_control_service.block_data})
+        )
+        uow.batches.append(DisplayBatch(
+            func=self.display_service.draw_preview_block,
+            parms={'block_data': self.block_control_service.block_data,
+                   '_map': self.metris_map})
+        )
+        uow.batches.append(DisplayBatch(
+            func=self.display_service.draw_mission_background,
+            parms={'mission_coordinate': self.current_mission_coordinate,
+                   'current_mission_block_color_num': self.block_control_service.block_data.current_mission_block_color_num})
         )
         with uow:
             uow.allocate()
